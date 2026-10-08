@@ -5,3 +5,6 @@ and versions follow [Semantic Versioning](https://semver.org); how to release:
 [docs/kit/build.md](docs/kit/build.md#versioning).
 
 ## [Unreleased]
+
+- Initialize the application configuration project from `cmake_template`, retaining
+  its pinned nlohmann/json dependency and shared build infrastructure.

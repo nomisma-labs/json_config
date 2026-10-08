@@ -1,8 +1,18 @@
 # json_config
 
 <!-- repo-description:begin -->
-TODO: what json_config is, in one paragraph.
+**json_config** is Nomisma's application configuration library based on JSON.
+It shares its design with [toml_config](https://github.com/nomisma-labs/toml_config),
+with similar capabilities planned for both format implementations.
 <!-- repo-description:end -->
+
+The planned scope includes layered configuration generation with a Python tool
+(`cfggen.py`), C++ configuration discovery, JSON/C++ mapping, and build-system
+integration for collecting and generating app configs.
+
+This repository currently contains the initialized `cmake_template` scaffold and
+the template's pinned nlohmann/json dependency. The configuration generator and
+C++ library are still to be implemented.
 
 ## Build
 
