@@ -3,5 +3,4 @@
 #
 # One subdirectory per app (docs/kit/howto.md#an-app). The sandbox holds experiments.
 
-add_subdirectory(hello) # template-only
 add_subdirectory(sandbox)
