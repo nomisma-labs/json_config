@@ -417,16 +417,3 @@ All such cases can be done by updating the app config and restarting the app (or
     The app accepts `--set <JSON-pointer>=<value>` to replace an existing JSON value.
     A missing target is an error. These overrides run after placeholder substitution,
     so command-line values take precedence.
-
-
-## Config generation
-**jcfg** generation tool is called `jcfggen.py`.
-It can generate selected app configs (multiple if the app defines more than one configs) or a single config for app/config-name.
-`jcfggen.py` may be used manually or by the build system.
-
-TODO: describe `jcfggen.py` arguments and use cases
-TODO: add description of build system integration
-
-## App/Config binding
-1. Config resolution sequence
-1. Hard-wired config
