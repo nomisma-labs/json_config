@@ -52,6 +52,9 @@ properties alongside it.
 The `jcfg` property is reserved at the section root and is excluded from generated
 application JSON. The array preserves section order.
 
+The `jcfg:` marker is reserved for instructions and placeholders; using it as
+literal application text is unsupported.
+
 See [app_jcfg.json](examples/stucture_config/app_jcfg.json) for an example with three
 sections: `common`, `ci`, and `prod`. Each section defines an application config,
 although writing its output file may be suppressed. A section usually represents
@@ -67,7 +70,7 @@ The structure follows these rules:
    in the single-object form. The first section is the root and has no `jcfg.extend`.
    Its name can be any section name, such as `dev`, `sim`, `common`, or `base`;
    Every other section names exactly one parent through `jcfg.extend`, a string
-   referring to an earlier    section in the same file. All sections therefore derive
+   referring to an earlier section in the same file. All sections therefore derive
    directly or indirectly from the root; forward references and inheritance cycles
    are not allowed.
 2. **Merge precedence.** Start with the parent's resolved application config, or
@@ -87,9 +90,8 @@ The structure follows these rules:
 4. **Property imports.** A jcfg-authored property value such as
    `"jcfg:import symbol.json"` imports JSON data at that property before merging
    it into the inherited/imported configuration. Imported ordinary JSON remains
-   literal data. [Fragment imports](#import-a-fragment-of-a-json-file) select a
-   value within a donor file. Literal escaping in jcfg-authored content remains
-   to be defined.
+   literal data during generation. [Fragment imports](#import-a-fragment-of-a-json-file)
+   select a value within a donor file.
 5. **Config generation.** `jcfg.generate` is a boolean that defaults to `true` for
    each section. Setting it to `false` suppresses that section's output file, while
    its resolved application data and output filename remain available to children.
@@ -188,9 +190,8 @@ The selected arrays become the property values before the local section is
 merged. The unrelated `perps` settings do not enter the application config.
 See [genconfig/app.json](examples/mech_03_config/genconfig/app.json).
 
-Imported ordinary JSON is literal data. A string in a donor file that resembles
-a jcfg instruction is retained as a string. The syntax for writing such literal
-strings directly in jcfg-authored content remains to be defined.
+Imported ordinary JSON is not interpreted by the generator. Runtime environment
+placeholders are resolved when the application loads the config.
 
 ### Output filenames: default, inherited and explicit
 
@@ -261,13 +262,13 @@ See [base/app.json](examples/mech_07_config/genconfig/base/app.json) and
 
 This is still single inheritance: `ci` has one parent section. The import list
 adds ordinary JSON data sources to that inherited configuration. Consider that
-multiple import is a powerfull tool that can easily confuse both the writer and
+multiple import is a powerful tool that can easily confuse both the writer and
 the reader of the config, especially when many people collaborate on it. Typical
 use case for this feature is building a config for multiple environments (e.g.
 dev, research, ci, prod) where different people are responsible for different
-parts of the app config. So if the config has such logical separation, than
-multple import is a useable tool. However if the config is not semantically
-structured, than multyple import can create a mess.
+parts of the app config. So if the config has such logical separation, then
+multiple import is a useable tool. However if the config is not semantically
+structured, then multiple import can create a mess.
 
 ### Delete a key and override a value
 
@@ -344,16 +345,79 @@ channel, while `log.file` is deleted and `mdLog.file` receives a separate captur
 path. The other variants retain their own resolved settings.
 
 
-## Adavanced jcfg generation topics
+## Advanced jcfg generation topics
 1. Suppress config generation with `jcfg.generate: false`; see the
-   [structure rules and example](#structure-of-jcfg-file). The section remains
-   available for inheritance, and the flag is not inherited.
+   [structure rules and example](#structure-of-jcfg-file).
+   The section remains available for inheritance, but the flag is not inherited.
+   This property is useful if you created a "service" config section - which is not
+   supposed to have an associated environment or use case, but it's used by other
+   config sections as an extension base.
 1. Common config libraries
-1. Local user config library
+    At the beginning the app config is simple - it may define all config properties
+    in a single file, or split it into several parts which are stored in the same
+    app config folder. However going forward some config parameters becomes
+    common for a group of apps - e.g. prod connection parameters are used by
+    both a trading strategy and MD capture apps. It would be cumbersome and error
+    prone to define the same address of an MD end-point locally in different apps.
+    For that `jcfg` supports config libraries - a common area to store JSON files
+    that will be imported by app configs.
+    TBD: define the formalism and provide examples
+1. Placeholder substitution during generation
+    `{jcfg:var NAME}` substitutes a process environment variable during config
+    generation. A placeholder can occupy the whole string or appear within text;
+    surrounding text is preserved. `{jcfg:env NAME}` placeholders pass through
+    generation unchanged for resolution at runtime.
+    Example:
+    ```
+    {
+        "log": {"file": "{jcfg:var NFS_PATH}/logs"}
+    }
+    ```
 
-## jcfg overrides
-1. Process env variables as config values
-1. Command line config override format
+    TBD: define the formalism and provide examples
+
+## Runtime value overrides
+
+The application loads its config in this order:
+
+1. Parse the application JSON.
+2. Resolve runtime environment placeholders.
+3. Apply command-line overrides.
+4. Perform JSON/C++ mapping and application validation.
+
+Each stage must succeed before the next begins. An unset required environment
+variable causes failure before command-line overrides, even if an override would
+replace that value.
+
+There could be multiple reasons for runtime value overrides, but they all boil down to the fact that some parameter is required to have different value at the time when app is executed (versus the time when the app config was defined and generated), for instance.
+1. We want to restart the app with different log.level to get more detailed diagnostics.
+1. We want to try running the trading strategy with different parameters (e.g. risk aversion).
+1. Binance MD API endpoint address changed and we need to restart MD capture with different address.
+1. Order gateway requires private key to connect to Order API endpoint and we don't want to provide this key during config generation, so we set the private key only when we start a trading strategy.
+
+All such cases can be done by updating the app config and restarting the app (or dynamically resetting the app config). However this might be inconvenient. For this case we have other ways of runtime value overrides.
+
+### Types of overrides
+
+1. Placeholder substitution at runtime.
+    Example `app.json`:
+    ```
+    {
+        "log":
+        {
+            "level": "{jcfg:env LOG_LEVEL}",
+            "file": "{jcfg:env NFS_PATH}/logs"
+        }
+    }
+    ```
+    `{jcfg:env NAME}` substitutes an environment value within the string.
+    With `NFS_PATH=/srv/data`, the example's `log.file` becomes `/srv/data/logs`.
+    An unset variable is an error.
+2. Command line config override format
+    The app accepts `--set <JSON-pointer>=<value>` to replace an existing JSON value.
+    A missing target is an error. These overrides run after placeholder substitution,
+    so command-line values take precedence.
+
 
 ## Config generation
 **jcfg** generation tool is called `jcfggen.py`.
@@ -364,5 +428,5 @@ TODO: describe `jcfggen.py` arguments and use cases
 TODO: add description of build system integration
 
 ## App/Config binding
-1. Config resoultion sequence
+1. Config resolution sequence
 1. Hard-wired config

@@ -4,7 +4,7 @@ JSON app config library has 4 components supporting various config related workf
 
 1. Build system integration : config collector and generator integration
 2. Python config generator;
-3. C++ config locator;
-4. C++/toml mapping;
+3. C++ config loader and app config resolution;
+4. JSON/C++ mapping;
 
 **jcfg** is JSON based app config language described in [jcfg.md](jcfg.md)
