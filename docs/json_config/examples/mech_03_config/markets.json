@@ -1,0 +1,20 @@
+{
+    "spot": {
+        "symbols": [
+            "btcusdt",
+            "ethusdt"
+        ],
+        "channels": [
+            "trade",
+            "depth"
+        ]
+    },
+    "perps": {
+        "symbols": [
+            "btcusdt"
+        ],
+        "channels": [
+            "aggTrade"
+        ]
+    }
+}

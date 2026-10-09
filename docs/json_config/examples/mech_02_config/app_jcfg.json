@@ -1,0 +1,7 @@
+{
+    "jcfg": {
+        "name": "dev",
+        "gen_file": "app.json",
+        "import": "app.json"
+    }
+}

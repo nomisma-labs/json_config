@@ -1,0 +1,18 @@
+{
+    "jcfg": {
+        "name": "dev",
+        "gen_file": "app.json"
+    },
+    "log": {
+        "level": "debug"
+    },
+    "subscription": {
+        "symbols": [
+            "btcusdt"
+        ],
+        "channels": [
+            "trade",
+            "depth"
+        ]
+    }
+}

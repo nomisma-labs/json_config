@@ -7,7 +7,7 @@ with similar capabilities planned for both format implementations.
 <!-- repo-description:end -->
 
 The planned scope includes layered configuration generation with a Python tool
-(`cfggen.py`), C++ configuration discovery, JSON/C++ mapping, and build-system
+(`jcfggen.py`), C++ config resolution, JSON/C++ mapping, and build-system
 integration for collecting and generating app configs.
 
 This repository currently contains the initialized `cmake_template` scaffold and

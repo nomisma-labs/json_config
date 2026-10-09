@@ -1,0 +1,22 @@
+{
+    "log": {
+        "level": "warn",
+        "file": {
+            "name": "ci.log",
+            "rotationSize": 1500000
+        }
+    },
+    "connection": {
+        "address": "wss://dev.example.invalid/ws",
+        "timeout_s": 20
+    },
+    "subscription": {
+        "symbols": [
+            "ethusdt"
+        ],
+        "channels": [
+            "trade",
+            "depth"
+        ]
+    }
+}

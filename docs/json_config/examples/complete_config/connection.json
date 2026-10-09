@@ -1,0 +1,9 @@
+{
+    "connection": {
+        "snapshot": {
+            "address": "wss://snapshot.current.example.invalid/ws"
+        },
+        "address": "wss://current.example.invalid/ws",
+        "timeout_s": 20
+    }
+}

@@ -1,0 +1,13 @@
+{
+    "log": {
+        "level": "debug"
+    },
+    "subscription": {
+        "symbols": [
+            "ethusdt"
+        ],
+        "channels": [
+            "trade"
+        ]
+    }
+}

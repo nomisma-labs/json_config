@@ -1,0 +1,23 @@
+{
+    "log": {
+        "level": "warn"
+    },
+    "connection": {
+        "snapshot": {
+            "address": "wss://snapshot.dev.example.invalid/ws"
+        },
+        "address": "wss://dev.example.invalid/ws",
+        "timeout_s": 5
+    },
+    "subscription": {
+        "symbols": [
+            "btcusdt"
+        ],
+        "channels": [
+            "liquidation"
+        ]
+    },
+    "mdLog": {
+        "file": "md/%Y%m%d/binance-liquidation-%Y%m%d-%H.md"
+    }
+}

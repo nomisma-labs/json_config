@@ -1,0 +1,15 @@
+[
+    {
+        "jcfg": {
+            "name": "base",
+            "gen_file": "app.json"
+        },
+        "log": {
+            "level": "debug"
+        },
+        "subscription": {
+            "symbols": "jcfg:import markets.json/spot/symbols",
+            "channels": "jcfg:import markets.json/spot/channels"
+        }
+    }
+]

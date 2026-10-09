@@ -1,0 +1,32 @@
+[
+    {
+        "jcfg": {
+            "name": "base",
+            "gen_file": "app.json"
+        },
+        "log": {
+            "level": "debug"
+        },
+        "subscription": {
+            "symbols": [
+                "btcusdt"
+            ],
+            "channels": [
+                "trade",
+                "depth"
+            ]
+        }
+    },
+    {
+        "jcfg": {
+            "name": "ci",
+            "extend": "base"
+        }
+    },
+    {
+        "jcfg": {
+            "name": "prod",
+            "extend": "ci"
+        }
+    }
+]

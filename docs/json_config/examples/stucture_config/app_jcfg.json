@@ -1,0 +1,34 @@
+[
+    {
+        "jcfg": {
+            "name": "common",
+            "gen_file": "app.json",
+            "import": [
+                "app.json"
+            ],
+            "generate": false
+        },
+        "log": {
+            "level": "debug"
+        }
+    },
+    {
+        "jcfg": {
+            "name": "ci",
+            "extend": "common"
+        },
+        "log": {
+            "level": "warn"
+        }
+    },
+    {
+        "jcfg": {
+            "name": "prod",
+            "extend": "ci",
+            "gen_file": "prod.json"
+        },
+        "subscription": {
+            "symbols": "jcfg:import symbol.json"
+        }
+    }
+]

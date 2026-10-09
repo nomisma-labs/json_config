@@ -1,0 +1,45 @@
+[
+    {
+        "jcfg": {
+            "name": "base",
+            "gen_file": "app.json"
+        },
+        "log": {
+            "level": "debug",
+            "file": {
+                "name": "dev.log",
+                "rotationSize": 1500000
+            }
+        },
+        "connection": {
+            "address": "wss://dev.example.invalid/ws",
+            "timeout_s": 5
+        },
+        "subscription": {
+            "symbols": [
+                "btcusdt",
+                "solusdt"
+            ],
+            "channels": [
+                "trade",
+                "depth"
+            ]
+        }
+    },
+    {
+        "jcfg": {
+            "name": "ci",
+            "extend": "base",
+            "import": [
+                "connection.json",
+                "deployment.json"
+            ]
+        },
+        "log": {
+            "level": "error"
+        },
+        "connection": {
+            "timeout_s": 30
+        }
+    }
+]

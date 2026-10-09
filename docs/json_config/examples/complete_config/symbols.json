@@ -1,0 +1,9 @@
+{
+    "spot": [
+        "btcusdt",
+        "ethusdt"
+    ],
+    "liquidation": [
+        "btcusdt"
+    ]
+}

@@ -1,0 +1,26 @@
+{
+    "log": {
+        "level": "warn",
+        "file": "log/%Y%m%d/md_capture.log"
+    },
+    "connection": {
+        "snapshot": {
+            "address": "wss://snapshot.current.example.invalid/ws"
+        },
+        "address": "wss://current.example.invalid/ws",
+        "timeout_s": 20
+    },
+    "subscription": {
+        "symbols": [
+            "btcusdt",
+            "ethusdt"
+        ],
+        "channels": [
+            "trade",
+            "depth"
+        ]
+    },
+    "mdLog": {
+        "file": "md/%Y%m%d/binance-spot-%Y%m%d-%H.md"
+    }
+}

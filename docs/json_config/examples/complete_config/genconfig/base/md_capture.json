@@ -1,0 +1,24 @@
+{
+    "log": {
+        "level": "debug"
+    },
+    "connection": {
+        "snapshot": {
+            "address": "wss://snapshot.dev.example.invalid/ws"
+        },
+        "address": "wss://dev.example.invalid/ws",
+        "timeout_s": 5
+    },
+    "subscription": {
+        "symbols": [
+            "btcusdt"
+        ],
+        "channels": [
+            "trade",
+            "depth"
+        ]
+    },
+    "mdLog": {
+        "file": "binance-spot-%Y%m%d-%H.md"
+    }
+}

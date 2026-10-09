@@ -1,0 +1,54 @@
+[
+    {
+        "jcfg": {
+            "name": "base",
+            "gen_file": "md_capture.json",
+            "import": [
+                "md_capture.json"
+            ]
+        }
+    },
+    {
+        "jcfg": {
+            "name": "ci",
+            "extend": "base",
+            "import": [
+                "connection.json",
+                "deployment.json"
+            ]
+        }
+    },
+    {
+        "jcfg": {
+            "name": "prod",
+            "extend": "ci"
+        },
+        "subscription": {
+            "symbols": "jcfg:import symbols.json/spot"
+        }
+    },
+    {
+        "jcfg": {
+            "name": "prod-liquidation",
+            "extend": "prod",
+            "gen_file": "md_capture_liquidation.json"
+        },
+        "log": {
+            "file": "jcfg:delete"
+        },
+        "connection": {
+            "jcfg:override": "jcfg:import md_capture.json/connection"
+        },
+        "subscription": {
+            "jcfg:override": {
+                "symbols": "jcfg:import symbols.json/liquidation",
+                "channels": [
+                    "liquidation"
+                ]
+            }
+        },
+        "mdLog": {
+            "file": "md/%Y%m%d/binance-liquidation-%Y%m%d-%H.md"
+        }
+    }
+]

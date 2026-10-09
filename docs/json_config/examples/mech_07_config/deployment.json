@@ -1,0 +1,11 @@
+{
+    "log": {
+        "level": "warn",
+        "file": {
+            "name": "ci.log"
+        }
+    },
+    "connection": {
+        "timeout_s": 20
+    }
+}

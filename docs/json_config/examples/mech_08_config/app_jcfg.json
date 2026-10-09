@@ -1,0 +1,41 @@
+[
+    {
+        "jcfg": {
+            "name": "base",
+            "gen_file": "app.json"
+        },
+        "log": {
+            "level": "debug",
+            "file": "capture.log"
+        },
+        "subscription": {
+            "symbols": [
+                "btcusdt"
+            ],
+            "channels": [
+                "trade",
+                "depth"
+            ],
+            "snapshot": true
+        }
+    },
+    {
+        "jcfg": {
+            "name": "ci",
+            "extend": "base"
+        },
+        "log": {
+            "file": "jcfg:delete"
+        },
+        "subscription": {
+            "jcfg:override": {
+                "symbols": [
+                    "ethusdt"
+                ],
+                "channels": [
+                    "trade"
+                ]
+            }
+        }
+    }
+]

@@ -1,0 +1,26 @@
+[
+    {
+        "jcfg": {
+            "name": "dev"
+        },
+        "log": {
+            "level": "debug"
+        }
+    },
+    {
+        "jcfg": {
+            "name": "ci",
+            "extend": "dev"
+        },
+        "log": {
+            "level": "warn"
+        }
+    },
+    {
+        "jcfg": {
+            "name": "prod",
+            "extend": "ci",
+            "gen_file": "capture.json"
+        }
+    }
+]
