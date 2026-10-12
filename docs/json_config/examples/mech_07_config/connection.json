@@ -1,6 +1,6 @@
 {
     "connection": {
-        "address": "wss://ci.example.invalid/ws",
+        "address": "wss://ci.example/ws",
         "timeout_s": 10
     }
 }

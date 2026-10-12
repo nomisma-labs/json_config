@@ -1,10 +1,14 @@
-# jcfg language definition
+# jcfg - a structural configuration language
 
+## Objective
 Nomisma **jcfg** language defines application configuration using JSON.
 The purpose of this language is to add structural features to JSON configs, i.e. ability to compose a single valid config from several fragments. For those who are familiar with OOP this reminds "inheritance" and "aggregation". So instead of redefining potentially complex multi-component config for different purposes we define "base" config with some default parameters and then re-use it by extending it in "derived" configs (inheritance) or by defining common parameters in "donor" config and including parts or whole "donor" into an "acceptor" config (aggregation). Those are main structural mechanisms. Apart from it there would be "adjustment" instructions that controls how these extension (aka inheritance) or aggregation (aka import or inclusion) happens.
+Another way of looking at jcfg - a "stackable" or "layered" configuration with each layer introducing or refining previous layers config properties.
 
+## Basic conventions
 **jcfg** files by convention have `*_jcfg.json` file suffix. Any jcfg file is a well formed JSON file so it can be processed with regular JSON tools (e.g. pretty printers etc.) The name of the jcfg file will have its special meaning when we come to integration with Nomisma build system, but in this guide we can use any name (usually just `app_jcfg.json`). Nomisma platform provides a tool to generate well formed JSON configs from jcfg so they can be used by Nomisma apps in different cases.
 
+## Motivating example
 Just to make it more illustrative let's consider `md_capture` app that have 2 configs - for dev and prod environments (shown schematically):
 ```
 dev:
@@ -113,7 +117,7 @@ live in different locations: the build collects source configs under
 `build/<preset>/genconfig/`. When the source JSON already contains the desired
 development configuration, the app can use it directly without generation.
 
-## Define basic mechanisms by example
+## Define basic jcfg mechanisms
 
 Each example folder contains a jcfg source, any JSON files it imports, and the
 expected application JSON under `genconfig/`. Examples with several sections group
@@ -132,6 +136,7 @@ The examples introduce the mechanisms in this order:
 1. [Merge several JSON files into an extended section](#merge-several-json-files-into-an-extended-section)
 1. [Delete a key and override a value](#delete-a-key-and-override-a-value)
 1. [Override with imported content](#override-with-imported-content)
+1. [Illustrate all basic mechanisms in one example](#complete-example)
 
 ### In-place config with an explicit output name
 
@@ -317,8 +322,7 @@ object are also resolved before that object is assigned.
 ### Complete example
 
 [md_capture_jcfg.json](examples/complete_config/md_capture_jcfg.json) brings the
-mechanisms together for the application described at the start of this guide.
-The addresses use `.invalid` placeholders for illustration.
+mechanisms together for the [motivating example](#motivating-example).
 
 The input files separate the responsibilities:
 

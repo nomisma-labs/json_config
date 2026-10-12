@@ -7,7 +7,7 @@
         }
     },
     "connection": {
-        "address": "wss://dev.example.invalid/ws",
+        "address": "wss://dev.example/ws",
         "timeout_s": 5
     },
     "subscription": {
