@@ -5,14 +5,14 @@
             "gen_file": "app.json"
         },
         "log": {
-            "level": "jcfg:import values.json/log_level"
+            "level": "jcfg:import values.json:/log_level"
         },
         "connection": {
-            "timeout_s": "jcfg:import values.json/timeout_s"
+            "timeout_s": "jcfg:import values.json:/timeout_s"
         },
         "subscription": {
-            "symbols": "jcfg:import markets.json/spot/symbols",
-            "channels": "jcfg:import markets.json/spot/channels"
+            "symbols": "jcfg:import markets.json:/spot/symbols",
+            "channels": "jcfg:import markets.json:/spot/channels"
         }
     }
 ]

@@ -34,7 +34,7 @@
             "extend": "ci"
         },
         "subscription": {
-            "jcfg:override": "jcfg:import markets.json/perps"
+            "jcfg:override": "jcfg:import markets.json:/perps"
         }
     }
 ]

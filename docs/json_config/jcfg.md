@@ -176,14 +176,18 @@ that the application can use directly.
 
 | Destination property | Import instruction | Selected value |
 |---|---|---|
-| `subscription.symbols` | `jcfg:import markets.json/spot/symbols` | The spot symbol array |
-| `subscription.channels` | `jcfg:import markets.json/spot/channels` | The spot channel array |
+| `subscription.symbols` | `jcfg:import markets.json:/spot/symbols` | The spot symbol array |
+| `subscription.channels` | `jcfg:import markets.json:/spot/channels` | The spot channel array |
 
-In `jcfg:import markets.json/spot/symbols`, the file is `markets.json` and the
-JSON Pointer is `/spot/symbols`. The slash after the filename is the pointer's
-first slash. A reference without a pointer, such as `jcfg:import markets.json`,
-imports the whole document. As in the previous example, the donor file is
+In `jcfg:import markets.json:/spot/symbols`, the file is `markets.json` and the
+JSON Pointer is `/spot/symbols`. The colon separates the filename from the pointer,
+which retains its leading `/`. Without a colon, as in `jcfg:import markets.json`,
+the whole document is imported. As in the previous example, the donor file is
 located relative to the jcfg source.
+
+After expanding generation placeholders, split the import argument (the text after
+`jcfg:import`) at its first `:`. The colon is reserved and cannot appear in donor
+file paths; any later colons belong to the JSON Pointer.
 
 The pointer follows [JSON Pointer (RFC 6901)](https://www.rfc-editor.org/rfc/rfc6901).
 `/spot/symbols/0` selects the first array element. In property names, `~1`
@@ -197,8 +201,8 @@ See [genconfig/app.json](examples/mech_03_config/genconfig/app.json).
 
 Fragment imports are also useful for keeping generation-time values in a separate
 JSON map. In the same example, [values.json](examples/mech_03_config/values.json)
-holds `log_level` and `timeout_s`. `jcfg:import values.json/log_level` supplies
-`log.level`, while `jcfg:import values.json/timeout_s` supplies `connection.timeout_s`.
+holds `log_level` and `timeout_s`. `jcfg:import values.json:/log_level` supplies
+`log.level`, while `jcfg:import values.json:/timeout_s` supplies `connection.timeout_s`.
 The generator copies these values into the output as a string and a number,
 respectively, using the same fragment-import mechanism.
 
@@ -314,7 +318,7 @@ as the value inside a `jcfg:override` wrapper:
 |---|---|---|
 | `base` | Initial in-place settings | [base/app.json](examples/mech_09_config/genconfig/base/app.json) |
 | `ci` | `jcfg:import subscription.json` | [ci/app.json](examples/mech_09_config/genconfig/ci/app.json) |
-| `prod` | `jcfg:import markets.json/perps` | [prod/app.json](examples/mech_09_config/genconfig/prod/app.json) |
+| `prod` | `jcfg:import markets.json:/perps` | [prod/app.json](examples/mech_09_config/genconfig/prod/app.json) |
 
 The `ci` replacement comes from the complete
 [subscription.json](examples/mech_09_config/subscription.json) document. The
@@ -391,7 +395,7 @@ path. The other variants retain their own resolved settings.
             "name": "prod",
             "import": "{jcfg:gen-var NOM_CONFIG_LIB}/connection.json"
         },
-        "symbols": "jcfg:import {jcfg:gen-var NOM_CONFIG_LIB}/markets.json/spot/symbols"
+        "symbols": "jcfg:import {jcfg:gen-var NOM_CONFIG_LIB}/markets.json:/spot/symbols"
     }
     ```
 

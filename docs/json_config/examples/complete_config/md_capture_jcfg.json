@@ -24,7 +24,7 @@
             "extend": "ci"
         },
         "subscription": {
-            "symbols": "jcfg:import symbols.json/spot"
+            "symbols": "jcfg:import symbols.json:/spot"
         }
     },
     {
@@ -37,11 +37,11 @@
             "file": "jcfg:delete"
         },
         "connection": {
-            "jcfg:override": "jcfg:import md_capture.json/connection"
+            "jcfg:override": "jcfg:import md_capture.json:/connection"
         },
         "subscription": {
             "jcfg:override": {
-                "symbols": "jcfg:import symbols.json/liquidation",
+                "symbols": "jcfg:import symbols.json:/liquidation",
                 "channels": [
                     "liquidation"
                 ]

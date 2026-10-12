@@ -70,6 +70,8 @@ The generator checks section metadata and inheritance, then resolves the selecte
 sections and their ancestors using the merge rules in [jcfg.md](jcfg.md).
 Relative imports are resolved from the source file's directory. Imported ordinary
 JSON stays literal during generation.
+Fragment references use `file.json:/pointer`; see the
+[fragment import rules](jcfg.md#import-a-fragment-of-a-json-file).
 
 `{jcfg:gen-var NAME}` is resolved during generation; an unset variable is an error.
 `{jcfg:run-var NAME}` remains in the output for substitution when loading the config.
