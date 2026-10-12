@@ -14,7 +14,6 @@ nom_project_options()
 
 # Dependencies come from external/ submodules (docs/kit/howto.md#a-dependency). In a superbuild the
 # outermost FetchContent_Declare wins, so every repo shares one copy.
-nom_find_metal()
 
 # nlohmann_json's own CMake project works as a subproject, so it is used as is.
 nom_require_submodule(external/nlohmann_json)

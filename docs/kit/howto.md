@@ -268,16 +268,6 @@ environment. Change shared mechanisms in the template, then synchronize them int
 
 ## A dependency
 
-- **Metal:** already provided by the template's `nom_find_metal()` call. Use `nom::metal` in
-  `PUBLIC_DEPS` when module interfaces or headers depend on it, or `PRIVATE_DEPS` for an
-  implementation-only dependency. If exported targets reference Metal, list its installed package
-  as a dependency, including for private dependencies of static libraries:
-  ```cmake
-  nom_lib(<name> MODULES <name>.cppm PUBLIC_DEPS nom::metal)
-  if(nom_install)
-      nom_install_package(TARGETS <name> DEPENDENCIES nom_metal)
-  endif()
-  ```
 - **One of our repos:** a submodule with a relative URL, pinned to a release tag:
   ```bash
   git submodule add ../<dep>.git external/<dep>
@@ -313,7 +303,8 @@ environment. Change shared mechanisms in the template, then synchronize them int
 run `cmake --workflow --preset complete`, or build its target explicitly in another preset. If an
 experiment has its own support libraries, mark them `EXCLUDE_FROM_ALL TRUE` so they build only
 when a dependent app is requested. Experiments that need third-party code fetch it in their
-own `CMakeLists.txt`.
+own `CMakeLists.txt`. Experiments are git-ignored (`/apps/sandbox/*/` in `.gitignore`), so they
+stay in the clone; when one is worth sharing, commit it by force with `git add -f`.
 
 ## A release
 

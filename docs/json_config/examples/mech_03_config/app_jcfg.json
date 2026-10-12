@@ -5,7 +5,10 @@
             "gen_file": "app.json"
         },
         "log": {
-            "level": "debug"
+            "level": "jcfg:import values.json/log_level"
+        },
+        "connection": {
+            "timeout_s": "jcfg:import values.json/timeout_s"
         },
         "subscription": {
             "symbols": "jcfg:import markets.json/spot/symbols",

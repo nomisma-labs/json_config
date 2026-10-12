@@ -46,7 +46,6 @@ code instead of renaming it:
   the lab (the sandbox experiments, `docs/lab/`) and the
   template-only files (`docker/`, the `ci-image` and `ci-template` workflows, the template sync
   test, and itself);
-- retains the Metal v2.1.4 submodule and `nom_find_metal()` call as the shared dependency baseline;
 - retains optional Python packaging helpers and pinned build-tool requirements; generated repos
   start without a Python package and add one using [howto.md](howto.md#a-python-package);
 - deletes the lines and blocks the template marks as template-only;
@@ -58,9 +57,10 @@ code instead of renaming it:
   `--template-url <url>` instead of setting the URL in the template.
 
 It checks everything first and stops without changing anything if the repo doesn't look like a
-fresh copy of the template. `./bootstrap.sh` validates the initialized repo locally; its regular
-`ci` workflow validates it on GitHub. The new repo starts without example tests; add your own
-code and tests with the recipes in [howto.md](howto.md), then run bootstrap again.
+fresh copy of the template. `./bootstrap.sh` validates the initialized repo locally and enables
+its [git hooks](build.md#git-hooks); its regular `ci` workflow validates it on GitHub. The new
+repo starts without example tests; add your own code and tests with the recipes in
+[howto.md](howto.md), then run bootstrap again.
 Define new Nomisma library APIs in named modules and import them in apps and tests.
 Keep macro headers and third-party dependency headers where needed.
 
@@ -84,8 +84,8 @@ Keep macro headers and third-party dependency headers where needed.
 
 Template-owned paths are the kits (`cmake/kit/`, `tools/kit/`, `docs/kit/`), `bootstrap.sh`,
 `.clang-format`, `.clang-tidy`, `.clangd`, `.editorconfig` and `.github/workflows/ci.yml`.
-Change them only in `cmake_template`; a repo keeps its own CMake files, tools and docs in
-`cmake/`, `tools/` and `docs/`, outside the kits. To bring a repo up to date:
+Change them only in `cmake_template`; a repo keeps its own CMake files in `cmake/<repo>/`, and
+its tools and docs in `tools/` and `docs/`, outside the kits. To bring a repo up to date:
 
 ```bash
 python3 tools/kit/sync_template.py      # to the newest release, or --to <release tag>
@@ -123,10 +123,9 @@ reviewing an unpublished template change, keep its shared files in the template 
 assess the repo-specific migration separately and perform the recorded sync once the template
 revision is available.
 
-Dependency migrations also update repository-owned files: sync supplies `nom_find_metal()`,
-but existing repos add or retain the Metal submodule in `.gitmodules`, call the helper from their
-top-level `CMakeLists.txt`, and use `nom::metal` in place of local adapters. Public dependency
-declarations in installed packages use `nom_metal`.
+Dependency changes also update repository-owned files: `.gitmodules`, the top-level
+`CMakeLists.txt`, helpers in `cmake/<repo>/` and the dependencies of installed packages. The
+release's upgrade steps list them.
 
 Python packaging follows the same boundary: synchronize the kit, tools and shared guidance,
 then add repository-owned `pyproject.toml`, binding sources and target declarations. Keep the

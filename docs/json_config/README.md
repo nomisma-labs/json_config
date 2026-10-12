@@ -7,3 +7,5 @@ JSON app config framework has 4 components supporting various config related wor
 1. [Build system integration](build_system_integration.md) : config collector and generator integration
 1. [C++ config loader and app config resolution](app_config_binding.md);
 1. [JSON/C++ mapping](json_cpp_mapping.md);
+
+Implementation discussion: [Implementation details using nlohmann/json](nlohmann_implementation.md).

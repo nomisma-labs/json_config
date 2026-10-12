@@ -158,8 +158,8 @@ containing the application settings, with the `jcfg` metadata removed.
 
 In [app_jcfg.json](examples/mech_02_config/app_jcfg.json), the single `dev` section
 has `jcfg.import` set to `"app.json"`. This is equivalent to `["app.json"]`; an
-array supports merging several whole JSON objects in order. Import paths are
-resolved relative to the jcfg source file, so the input is the adjacent
+array supports merging several whole JSON objects in order. Relative import paths
+are resolved from the jcfg source file's directory, so the input is the adjacent
 [app.json](examples/mech_02_config/app.json).
 
 The section has no local application properties. Its expected output,
@@ -194,6 +194,13 @@ and a string stays a string.
 The selected arrays become the property values before the local section is
 merged. The unrelated `perps` settings do not enter the application config.
 See [genconfig/app.json](examples/mech_03_config/genconfig/app.json).
+
+Fragment imports are also useful for keeping generation-time values in a separate
+JSON map. In the same example, [values.json](examples/mech_03_config/values.json)
+holds `log_level` and `timeout_s`. `jcfg:import values.json/log_level` supplies
+`log.level`, while `jcfg:import values.json/timeout_s` supplies `connection.timeout_s`.
+The generator copies these values into the output as a string and a number,
+respectively, using the same fragment-import mechanism.
 
 Imported ordinary JSON is not interpreted by the generator. Runtime environment
 placeholders are resolved when the application loads the config.
@@ -350,44 +357,59 @@ path. The other variants retain their own resolved settings.
 
 
 ## Advanced jcfg generation topics
+
 1. Suppress config generation with `jcfg.generate: false`; see the
    [structure rules and example](#structure-of-jcfg-file).
    The section remains available for inheritance, but the flag is not inherited.
    This property is useful if you created a "service" config section - which is not
    supposed to have an associated environment or use case, but it's used by other
    config sections as an extension base.
-1. Common config libraries
-    At the beginning the app config is simple - it may define all config properties
-    in a single file, or split it into several parts which are stored in the same
-    app config folder. However going forward some config parameters becomes
-    common for a group of apps - e.g. prod connection parameters are used by
-    both a trading strategy and MD capture apps. It would be cumbersome and error
-    prone to define the same address of an MD end-point locally in different apps.
-    For that `jcfg` supports config libraries - a common area to store JSON files
-    that will be imported by app configs.
-    TBD: define the formalism and provide examples
 1. Placeholder substitution during generation
-    `{jcfg:var NAME}` substitutes a process environment variable during config
-    generation. A placeholder can occupy the whole string or appear within text;
-    surrounding text is preserved. `{jcfg:env NAME}` placeholders pass through
-    generation unchanged for resolution at runtime.
+    `{jcfg:gen-var NAME}` substitutes a generation-time variable supplied through the
+    process environment or by the build system. A placeholder can occupy the whole
+    string or appear within text; surrounding text is preserved. `{jcfg:run-var NAME}`
+    placeholders pass through generation unchanged for resolution when loading the config.
     Example:
     ```
     {
-        "log": {"file": "{jcfg:var NFS_PATH}/logs"}
+        "log": {"file": "{jcfg:gen-var NFS_PATH}/logs"}
+    }
+    ```
+1. Common config libraries
+    Config libraries are shared directories of JSON files that app configs can
+    import. They avoid duplicating common settings, such as production connection
+    parameters used by both a trading strategy and an MD capture app.
+
+    Import paths in `jcfg.import` and `jcfg:import` can start with a location
+    placeholder. For example, `NOM_CONFIG_LIB` can point to a well-known config
+    library directory in the project. Set it in the process environment, or let
+    the build system supply it in the generator's environment:
+
+    ```json
+    {
+        "jcfg": {
+            "name": "prod",
+            "import": "{jcfg:gen-var NOM_CONFIG_LIB}/connection.json"
+        },
+        "symbols": "jcfg:import {jcfg:gen-var NOM_CONFIG_LIB}/markets.json/spot/symbols"
     }
     ```
 
-    TBD: define the formalism and provide examples
+    Resolve location placeholders before reading the referenced files. An unset
+    variable or missing file fails generation. Expanded absolute paths are used
+    directly; relative paths are resolved from the jcfg source file's directory.
 
 ## Runtime value overrides
 
-The application loads its config in this order:
+When loading a JSON config file, the application follows this order:
 
 1. Parse the application JSON.
 2. Resolve runtime environment placeholders.
 3. Apply command-line overrides.
 4. Perform JSON/C++ mapping and application validation.
+
+For [hard-wired config](app_config_binding.md#hard-wired-config), command-line
+overrides target the JSON serialized from the initialized C++ config.
 
 Each stage must succeed before the next begins. An unset required environment
 variable causes failure before command-line overrides, even if an override would
@@ -409,12 +431,13 @@ All such cases can be done by updating the app config and restarting the app (or
     {
         "log":
         {
-            "level": "{jcfg:env LOG_LEVEL}",
-            "file": "{jcfg:env NFS_PATH}/logs"
+            "level": "{jcfg:run-var LOG_LEVEL}",
+            "file": "{jcfg:run-var NFS_PATH}/logs"
         }
     }
     ```
-    `{jcfg:env NAME}` substitutes an environment value within the string.
+    `{jcfg:run-var NAME}` substitutes an environment value within the string when
+    loading the config.
     With `NFS_PATH=/srv/data`, the example's `log.file` becomes `/srv/data/logs`.
     An unset variable is an error.
 2. Command line config override format

@@ -8,3 +8,5 @@ and versions follow [Semantic Versioning](https://semver.org); how to release:
 
 - Initialize the application configuration project from `cmake_template`, retaining
   its pinned nlohmann/json dependency and shared build infrastructure.
+- Sync the shared build infrastructure to `cmake_template` v0.8.2, including
+  `COMPILE_OPTIONS` support and git hooks; remove the unused Metal dependency.
