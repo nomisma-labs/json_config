@@ -90,7 +90,8 @@ The structure follows these rules:
    selects its output filename; when omitted in a derived section, the filename
    is inherited from its parent. See
    [output filenames](#output-filenames-default-inherited-and-explicit) for the
-   default naming rule.
+   default naming rule. `jcfg.name`, `jcfg.extend`, and `jcfg.gen_file` are literal
+   strings and do not support placeholders.
 4. **Property imports.** A jcfg-authored property value such as
    `"jcfg:import symbol.json"` imports JSON data at that property before merging
    it into the inherited/imported configuration. Imported ordinary JSON remains
@@ -99,8 +100,13 @@ The structure follows these rules:
 5. **Config generation.** `jcfg.generate` is a boolean that defaults to `true` for
    each section. Setting it to `false` suppresses that section's output file, while
    its resolved application data and output filename remain available to children.
-   Its imports and instructions must still be valid. Children generate their own
-   files by default, even when their parent has `jcfg.generate` set to `false`.
+   Its imports and instructions are evaluated when it is an ancestor of a selected
+   section. Children generate their own files by default, even when their parent
+   has `jcfg.generate` set to `false`.
+
+Validate metadata and inheritance for every section. Resolve imports and
+instructions only for selected sections and their ancestors; unrelated sections
+do not require their donor files or generation variables to be available.
 
 In the example, `common` imports `app.json` and sets `log.level` to `debug`, but
 `jcfg.generate` is `false`, so it produces no output file. The `ci` section changes
@@ -370,7 +376,8 @@ path. The other variants retain their own resolved settings.
    config sections as an extension base.
 1. Placeholder substitution during generation
     `{jcfg:gen-var NAME}` substitutes a generation-time variable supplied through the
-    process environment or by the build system. A placeholder can occupy the whole
+    process environment or by the build system. Placeholders are allowed in
+    application string values and import paths. A placeholder can occupy the whole
     string or appear within text; surrounding text is preserved. `{jcfg:run-var NAME}`
     placeholders pass through generation unchanged for resolution when loading the config.
     Example:

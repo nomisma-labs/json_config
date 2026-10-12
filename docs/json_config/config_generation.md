@@ -66,8 +66,11 @@ omit both `--app` and `--config` from the first command.
 
 ## Resolution and errors
 
-The generator checks section metadata and inheritance, then resolves the selected
-sections and their ancestors using the merge rules in [jcfg.md](jcfg.md).
+The generator checks metadata and inheritance for every section, then resolves
+imports and instructions only for selected sections and their ancestors using
+the merge rules in [jcfg.md](jcfg.md). Unrelated sections do not require their
+donor files or generation variables to be available. `jcfg.name`, `jcfg.extend`,
+and `jcfg.gen_file` are literal strings; they do not support placeholders.
 Relative imports are resolved from the source file's directory. Imported ordinary
 JSON stays literal during generation.
 Fragment references use `file.json:/pointer`; see the
