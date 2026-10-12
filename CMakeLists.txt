@@ -11,6 +11,7 @@ project(json_config
 
 include(cmake/kit/nom_kit.cmake)
 nom_project_options()
+include(cmake/json_config/config.cmake)
 
 # Dependencies come from external/ submodules (docs/kit/howto.md#a-dependency). In a superbuild the
 # outermost FetchContent_Declare wins, so every repo shares one copy.

@@ -18,9 +18,14 @@ application JSON in memory. The [jcfggen.py CLI](tools/jcfggen.py) lists metadat
 and writes generated configs, preserving unchanged output files. Both use Python
 3.10+ and the standard library; no package installation is needed.
 
-The C++ library and generation-specific CMake helpers remain to be implemented.
-The existing `cmake_template` config collector and pinned nlohmann/json dependency
-are available.
+The [CMake helpers](docs/json_config/build_system_integration.md) register generation,
+config tests and installation, and provide `config` and `clean_config` targets.
+App builds collect configs; generation is requested with `config` for the whole
+build or `<project>_generate_jcfg_<app>` for one app, or opted into with
+`jcfg_generate(... BUILD_WITH_APP)`. Omit `SECTIONS` to generate all sections with
+generation enabled. The helpers reuse the existing
+`cmake_template` config collector. The C++ library remains
+to be implemented; the pinned nlohmann/json dependency is available.
 
 Generate one config from the complete example:
 

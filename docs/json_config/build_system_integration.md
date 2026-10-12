@@ -41,49 +41,92 @@ The build preset selects applications and compiler settings; a jcfg section
 selects application configuration. For example, a `dev` build may generate `prod`
 configs. These selections must not be implicitly tied together.
 
-The `json_config` CMake helper registers:
+Include [config.cmake](../../cmake/json_config/config.cmake) once after the shared
+kit. It is included by `json_config` itself; a client can also include it directly
+from the `json_config` checkout. Register generation after declaring the app:
+
+```cmake
+include("${json_config_SOURCE_DIR}/cmake/json_config/config.cmake")
+
+nom_app(md_capture SOURCES main.cpp BUILD_FOR dev ci)
+jcfg_generate(md_capture
+    SOURCE md_capture_jcfg.json
+    ENVIRONMENT "NOM_CONFIG_LIB=${PROJECT_SOURCE_DIR}/config_lib")
+```
+
+`SOURCE` is required. Omit `SECTIONS` to generate all sections with
+`jcfg.generate=true` (the default). To select a subset, use:
+
+```cmake
+jcfg_generate(md_capture SOURCE md_capture_jcfg.json SECTIONS ci prod)
+```
+
+Explicitly selecting a section with `jcfg.generate=false` is an error.
+`ENVIRONMENT` supplies optional `NAME=value` assignments on top of the build
+process environment. The helper registers:
 
 | Setting | Example |
 |---|---|
 | App name | `md_capture`, already declared by `nom_app()` |
 | Source relative to its config directory | `md_capture_jcfg.json` |
-| Sections to generate and install | `ci`, `prod` |
+| Sections to generate and install | All sections with generation enabled, or an explicit `SECTIONS` list |
 | Generator command | Discovered Python interpreter plus `jcfggen.py` |
 
-Select sections explicitly. Resolve output filenames from jcfg metadata through
-the generator's [listing operation](config_generation.md#command-line),
-so the app's CMake file does not repeat `jcfg.gen_file`. A change to section names
-or output filenames must refresh that output plan.
+By default, building the app only collects its configs. This supports development
+with an ordinary default JSON config and does not require generation-time donors
+or variables. Run `ninja config` to generate all registered configs, or build
+`<project>_generate_jcfg_<app>` to collect and generate one app's configs without
+compiling it, for example `json_config_generate_jcfg_md_capture` in a project
+named `json_config`. Add the optional `BUILD_WITH_APP` flag to `jcfg_generate()`
+when building that app should also generate its configs. This choice is explicit
+and independent of the preset.
+
+The helper resolves section selection and output filenames through the generator's
+[listing operation](config_generation.md#command-line), so the app's CMake file
+does not repeat `jcfg.gen_file`. Changing the jcfg source causes CMake to refresh
+the output plan on the next build. With `SECTIONS` omitted, newly added sections
+with generation enabled are included automatically. If none are enabled,
+generation produces no files and removes previously owned outputs.
 
 Config-generation CMake scripts and functions belong in `json_config`, including
 registration, build dependencies, and installation of generated outputs.
 `cmake_template` provides the existing config collector and remains unaware of
 generation. Client repositories use the helpers supplied by `json_config` and
-declare their app settings. The helper's exact CMake signature will be defined
-during implementation.
+declare their app settings through `jcfg_generate()`.
+The app name is the short name supplied to `nom_app()` in the same project.
+One app registers one source; apps sharing that source must use the same section
+selection and explicit environment. Source, section and output names containing
+semicolons or newlines are unsupported by the CMake integration.
 
 ## Build sequence
 
 1. Collect the app's source configs.
 2. Run the generator against the collected source, with explicit input/output paths.
 3. Check that every requested section produced its expected JSON object.
-4. Record the successful output set, then allow the app build target to complete.
+4. Record the successful output set.
 
-The generation target depends on collection; the app target depends on generation.
-Several executables sharing the same source and selection share one generation
-operation. Conflicting registrations or overlapping output ownership are errors.
+The generation target depends on collection. An app depends on generation only
+with `BUILD_WITH_APP`. Several executables sharing the same source and selection
+share one generation operation; each app can choose whether to build it automatically.
+Conflicting registrations or overlapping output ownership are errors.
 
-Initially, run generation after collection on every requested app build. This
-observes donor-file changes, removed files, and generation-time environment
-changes. Unchanged output contents need not be rewritten, and config-only changes
-do not require recompiling C++. CMake discovers the Python interpreter and passes
-absolute tool paths so execution does not depend on the working directory.
+Generation runs each time its target is requested, observing donor-file changes,
+removed files, and generation-time environment changes. Unchanged output contents
+need not be rewritten, and config-only changes do not require recompiling C++.
+CMake discovers the Python interpreter and passes absolute tool paths so execution
+does not depend on the working directory.
 
 Maintain a build record of the generated files and their content hashes. Invalidate
 it before a new attempt, and mark it successful only after generation completes.
 Remove renamed or deselected files owned by that registration without touching
 other apps' outputs. Valid runtime `{jcfg:run-var NAME}` placeholders are allowed in
 generated files; C++ type and application validation happen when the app loads them.
+
+The build utility [jcfg_build.py](../../tools/jcfg_build.py) keeps ownership and
+success records under `CMakeFiles/json_config/records/`. Success is invalidated
+before collection, including an app-only collection or a failed collection. The
+configure-time output plan lives separately so cleaning does not require a CMake
+reconfigure.
 
 ## Repository-wide config target
 
@@ -114,9 +157,13 @@ Each call registers one test that runs the app with the section's generated conf
 using `--config FILE --check-config`. It exercises config loading, JSON/C++ mapping,
 and validation, then exits before starting application services; see
 [app integration](app_config_binding.md#application-integration).
-Build the app and generate its config before running CTest. Tests are registered
+Build the app and generate its config before running CTest, for example with
+`ninja all config`. Tests are registered
 only for explicitly requested app/section pairs, allowing projects to control
 the size of their test suite.
+Call `config_test()` after `jcfg_generate()`, inside the project's test-enabled
+condition. The section must be included in that app's generation selection.
+Test names are `<project>_<app>_config_<section>` and carry the `config` label.
 
 ## Cleaning build configs
 
@@ -125,8 +172,9 @@ for the current build tree, including current outputs and files left by renamed
 or removed apps or sections. It deletes both `build/<preset>/config/` and
 `build/<preset>/genconfig/`, together with generation success records, without
 needing to inspect the current jcfg definitions. Original source configs remain
-intact. Run `ninja config` to collect and generate all registered configs again,
-or build an app to restore its configs.
+intact. Run `ninja config` to collect and generate all registered configs again.
+Building an app restores its collected configs; generation also runs if that app
+uses `BUILD_WITH_APP`.
 
 ```bash
 ninja -C build/dev clean_config
@@ -146,7 +194,15 @@ When installation is enabled, the current kit installs selected executables unde
 The generation integration additionally installs its selected outputs under
 `<prefix>/genconfig/<section>/<gen_file>`.
 
-Build before installing. Installation must reject a missing success record,
+Build apps and generate configs before installing:
+
+```bash
+ninja -C build/dev all config
+cmake --install build/dev --prefix /path/to/staging
+```
+
+If building them separately, run `ninja config` after the last app build: app
+collection invalidates prior generation records. Installation must reject a missing success record,
 missing output, or output changed since successful generation. An app excluded by
 `BUILD_FOR` remains explicitly buildable but is not installed. A shared config
 group is installed when one of its apps is selected.
