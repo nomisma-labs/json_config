@@ -13,6 +13,9 @@ import re
 from typing import Any
 
 
+__all__ = ["config_error", "resolved_config", "generate_configs", "generate_configs_with_inputs"]
+
+
 class config_error(ValueError):
     """Invalid source metadata, application instructions, or imported JSON."""
 
@@ -51,14 +54,14 @@ class _section:
     data: dict[str, Any]
 
 
-def _finite_float(text: str) -> float:
+def _parse_finite_float(text: str) -> float:
     value = float(text)
     if not math.isfinite(value):
         raise ValueError(f"number is outside the supported finite range: {text}")
     return value
 
 
-def _invalid_constant(text: str) -> None:
+def _reject_json_constant(text: str) -> None:
     raise ValueError(f"invalid JSON constant: {text}")
 
 
@@ -68,12 +71,12 @@ def _read_json(path: Path, location: _location) -> Any:
     except (OSError, UnicodeError, ValueError) as error:
         raise location.error(f"cannot read {path}: {error}") from error
     try:
-        return json.loads(text, parse_constant=_invalid_constant, parse_float=_finite_float)
+        return json.loads(text, parse_constant=_reject_json_constant, parse_float=_parse_finite_float)
     except ValueError as error:
         raise location.error(f"invalid JSON in {path}: {error}") from error
 
 
-def _literal(value: Any, location: _location) -> str:
+def _validate_literal_string(value: Any, location: _location) -> str:
     if not isinstance(value, str) or not value:
         raise location.error("expected a nonempty string")
     if "jcfg:" in value:
@@ -81,8 +84,8 @@ def _literal(value: Any, location: _location) -> str:
     return value
 
 
-def _output_name(value: Any, location: _location) -> str:
-    name = _literal(value, location)
+def _validate_output_name(value: Any, location: _location) -> str:
+    name = _validate_literal_string(value, location)
     path = PurePosixPath(name)
     if path.is_absolute() or ".." in path.parts or not path.name or "\0" in name:
         raise location.error("output name must be relative and cannot contain path traversal")
@@ -104,7 +107,7 @@ def _read_sections(source: Path) -> list[_section]:
         if not isinstance(entry, dict) or not isinstance(entry.get("jcfg"), dict):
             raise entry_location.error("each section requires a jcfg metadata object")
         metadata = entry["jcfg"]
-        name = _output_name(metadata.get("name"), entry_location.child("jcfg").child("name"))
+        name = _validate_output_name(metadata.get("name"), entry_location.child("jcfg").child("name"))
         current = _location(source, name).child("jcfg")
         if name in sections:
             raise current.child("name").error(f"duplicate section {name!r}")
@@ -117,12 +120,12 @@ def _read_sections(source: Path) -> list[_section]:
             if "extend" in metadata:
                 raise current.child("extend").error("the first section cannot extend another section")
         else:
-            parent = _literal(metadata.get("extend"), current.child("extend"))
+            parent = _validate_literal_string(metadata.get("extend"), current.child("extend"))
             if parent not in sections:
                 raise current.child("extend").error(f"parent {parent!r} must name an earlier section")
 
         filename = metadata.get("gen_file", sections[parent].gen_file if parent else default_filename)
-        filename = _output_name(filename, current.child("gen_file"))
+        filename = _validate_output_name(filename, current.child("gen_file"))
         generate = metadata.get("generate", True)
         if not isinstance(generate, bool):
             raise current.child("generate").error("generate must be a boolean")
@@ -136,17 +139,17 @@ def _read_sections(source: Path) -> list[_section]:
     return list(sections.values())
 
 
-def _merge(previous: Any, incoming: Any) -> Any:
+def _merge_literal_json(previous: Any, incoming: Any) -> Any:
     """Merge literal JSON; this function never interprets instructions."""
     if isinstance(previous, dict) and isinstance(incoming, dict):
         merged = deepcopy(previous)
         for key, value in incoming.items():
-            merged[key] = _merge(merged.get(key), value)
+            merged[key] = _merge_literal_json(merged.get(key), value)
         return merged
     return deepcopy(incoming)
 
 
-def _fragment(document: Any, pointer: str, reference: str, location: _location) -> Any:
+def _select_json_fragment(document: Any, pointer: str, reference: str, location: _location) -> Any:
     if not pointer:
         return document
     if not pointer.startswith("/"):
@@ -175,7 +178,8 @@ class _resolver:
         self.environment = environment
         self.donors: dict[Path, Any] = {}
 
-    def expand(self, text: str, location: _location, *, allow_runtime: bool = True) -> str:
+    def expand_generation_variables(self, text: str, location: _location,
+                                    *, allow_runtime: bool = True) -> str:
         # Scan authored text once. Environment values are data, not more instructions.
         parts = []
         end = 0
@@ -203,7 +207,7 @@ class _resolver:
         return "".join(parts)
 
     def import_value(self, text: str, location: _location, *, whole_object: bool = False) -> Any:
-        reference = self.expand(text, location, allow_runtime=False)
+        reference = self.expand_generation_variables(text, location, allow_runtime=False)
         filename, separator, pointer = reference.partition(":")
         if not filename or "\0" in filename:
             raise location.error("import requires a nonempty filename without null characters")
@@ -214,17 +218,18 @@ class _resolver:
             path = self.source.parent / path
         if path not in self.donors:
             self.donors[path] = _read_json(path, location)
-        value = _fragment(self.donors[path], pointer, reference, location)
+        value = _select_json_fragment(self.donors[path], pointer, reference, location)
         if whole_object and not isinstance(value, dict):
             raise location.error(f"section import {reference!r} must contain a JSON object")
         return value
 
-    def apply(self, previous: Any, authored: Any, location: _location) -> Any:
+    def merge_jcfg_values(self, previous: Any, authored: Any, location: _location) -> Any:
         if isinstance(authored, dict):
             if "jcfg:override" in authored:
                 if len(authored) != 1:
                     raise location.error("an override wrapper must contain only 'jcfg:override'")
-                return self.apply(None, authored["jcfg:override"], location.child("jcfg:override"))
+                return self.merge_jcfg_values(None, authored["jcfg:override"],
+                                              location.child("jcfg:override"))
             result = deepcopy(previous) if isinstance(previous, dict) else {}
             for key, value in authored.items():
                 child = location.child(key)
@@ -235,18 +240,18 @@ class _resolver:
                         raise child.error("cannot delete a missing property")
                     del result[key]
                 else:
-                    result[key] = self.apply(result.get(key), value, child)
+                    result[key] = self.merge_jcfg_values(result.get(key), value, child)
             return result
         if isinstance(authored, list):
-            return [self.apply(None, value, location.child(index))
+            return [self.merge_jcfg_values(None, value, location.child(index))
                     for index, value in enumerate(authored)]
         if isinstance(authored, str):
             command, _, argument = authored.partition(" ")
             if command == "jcfg:import":
-                return _merge(previous, self.import_value(argument.strip(), location))
+                return _merge_literal_json(previous, self.import_value(argument.strip(), location))
             if authored == "jcfg:delete":
                 raise location.error("delete requires an existing object property")
-            return self.expand(authored, location)
+            return self.expand_generation_variables(authored, location)
         return authored
 
 
@@ -259,6 +264,19 @@ def generate_configs(source: str | Path, *, sections: Iterable[str] | None = Non
     but only selected sections and their ancestors require external inputs.
     An explicit environment replaces the process environment for this call.
     No files are written.
+    """
+    configs, _ = generate_configs_with_inputs(source, sections=sections, environment=environment)
+    return configs
+
+
+def generate_configs_with_inputs(source: str | Path, *, sections: Iterable[str] | None = None,
+                                 environment: Mapping[str, str] | None = None
+                                 ) -> tuple[dict[str, resolved_config], set[Path]]:
+    """Return (configs, input_paths), using the same options as generate_configs.
+
+    Configs are keyed by section name, in source order. Input paths are a set of
+    absolute Path objects with symbolic links resolved, including the source and
+    donors read for selected sections and their ancestors. No files are written.
     """
     source = Path(source).absolute()
     definitions = _read_sections(source)
@@ -288,11 +306,12 @@ def generate_configs(source: str | Path, *, sections: Iterable[str] | None = Non
         for index, reference in enumerate(section.imports):
             donor = resolver.import_value(reference, location.child("jcfg").child("import").child(index),
                                           whole_object=True)
-            data = _merge(data, donor)
-        data = resolver.apply(data, section.data, location)
+            data = _merge_literal_json(data, donor)
+        data = resolver.merge_jcfg_values(data, section.data, location)
         if not isinstance(data, dict):
             raise location.error("resolved application config must be a JSON object")
         resolved[section.name] = data
         if section.name in selected:
             outputs[section.name] = resolved_config(section.name, section.gen_file, deepcopy(data))
-    return outputs
+    inputs = {source.resolve(), *(path.resolve() for path in resolver.donors)}
+    return outputs, inputs

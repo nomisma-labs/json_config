@@ -14,13 +14,26 @@ integration for collecting and generating app configs.
 
 The [configuration documentation](docs/json_config/README.md) defines the library's
 behavior. The [Python generator engine](tools/jcfg.py) resolves jcfg sections to
-application JSON in memory, with tests covering the documented examples and
-language rules. It uses Python 3.10+ and the standard library; no package
-installation is needed.
+application JSON in memory. The [jcfggen.py CLI](tools/jcfggen.py) lists metadata
+and writes generated configs, preserving unchanged output files. Both use Python
+3.10+ and the standard library; no package installation is needed.
 
-The `jcfggen.py` command line and output publication, C++ library, and
-generation-specific CMake helpers remain to be implemented. The existing
-`cmake_template` config collector and pinned nlohmann/json dependency are available.
+The C++ library and generation-specific CMake helpers remain to be implemented.
+The existing `cmake_template` config collector and pinned nlohmann/json dependency
+are available.
+
+Generate one config from the complete example:
+
+```bash
+python3 tools/jcfggen.py \
+    --source docs/json_config/examples/complete_config/md_capture_jcfg.json \
+    --config prod --output-dir build/dev/genconfig
+```
+
+This writes `build/dev/genconfig/prod/md_capture.json`. Use `--list` instead of
+`--output-dir` to inspect section metadata without evaluating imports or variables.
+Use `--input-dir DIR` instead of `--source FILE` to discover `*_jcfg.json` files recursively.
+See [config generation](docs/json_config/config_generation.md) for the full CLI.
 
 From the repository root, the engine can be used independently:
 
@@ -41,10 +54,16 @@ Omit `sections` to resolve all sections with generation enabled. Generation
 variables use the process environment unless an explicit `environment` mapping
 is supplied. Invalid configuration raises `config_error` with source context.
 
-Run the engine tests directly, or through the normal CTest workflow:
+`generate_configs_with_inputs()` accepts the same arguments and returns
+`(configs, input_paths)`. The paths are a set of absolute `Path` objects with
+symbolic links resolved, covering the source and donor files read for selected
+sections and their ancestors. The CLI uses them to protect inputs from output writes.
+
+Run the engine and CLI tests directly, or through the normal CTest workflow:
 
 ```bash
 python3 -m unittest discover -s tests/unit/jcfg -p '*_test.py' -v
+python3 -m unittest discover -s tests/integration/jcfggen -p '*_test.py' -v
 ```
 
 ## Build
