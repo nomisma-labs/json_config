@@ -24,8 +24,17 @@ App builds collect configs; generation is requested with `config` for the whole
 build or `<project>_generate_jcfg_<app>` for one app, or opted into with
 `jcfg_generate(... BUILD_WITH_APP)`. Omit `SECTIONS` to generate all sections with
 generation enabled. The helpers reuse the existing
-`cmake_template` config collector. The C++ library remains
-to be implemented; the pinned nlohmann/json dependency is available.
+`cmake_template` config collector.
+
+The [JSON/C++ mapping library](docs/json_config/json_cpp_mapping.md) is available
+through `import nom.json_config;` and the CMake target `nom::json_config`.
+`NOM_CONFIG` in `<json_config/config.h>` maps application structures with required,
+defaulted, and optional members using nlohmann/json. It enforces supported config
+types, including checked numeric types `jint`, `juint`, and `jdouble`.
+These types and `defaulted<T>` belong to `nom::jcfg`, with convenience aliases in
+`nom::jcfg::types`.
+Mapping and application validation are separate. Config discovery, file loading,
+runtime substitution, and command-line overrides remain to be implemented.
 
 Generate one config from the complete example:
 

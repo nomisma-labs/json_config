@@ -10,4 +10,7 @@ JSON app config framework has 4 components supporting various config related wor
 
 [Implementation details using nlohmann/json](nlohmann_implementation.md).
 
+[Config types and serialization dependencies](config_types_design.md) explains
+the current coupling and a possible future separation, which is deferred.
+
 Implementation availability is tracked in the [repository status](../../README.md#implementation-status).

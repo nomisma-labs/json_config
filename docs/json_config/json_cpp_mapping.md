@@ -7,28 +7,70 @@ the C++ types; the loader and generator do not need to know individual config me
 
 ## Declaring a config
 
-The framework's C++ types use the `nom::jcfg` namespace.
+Import `nom.json_config` for the config types in `nom::jcfg`. The
+`nom::jcfg::types` namespace provides aliases for a convenient scoped using-directive.
+Include `<json_config/config.h>` for `NOM_CONFIG` and the nlohmann/json dependency.
 
 The Nomisma macro `NOM_CONFIG` declares which members participate in JSON/C++
-mapping. By default, JSON keys have the same names as the C++ members:
+mapping and checks that their types are enabled for config use. By default, JSON
+keys have the same names as the C++ members:
 
 ```cpp
-struct connection_config
+#include <json_config/config.h>
+
+#include <expected>
+#include <optional>
+#include <stdexcept>
+#include <string>
+
+import nom.json_config;
+
+namespace demo
 {
-    std::string address;
-    int timeout_s;
+    using namespace nom::jcfg::types;
 
-    std::expected<void, std::string> validate() const;
-};
+    struct connection_config
+    {
+        std::string address;
+        defaulted<jint> timeout_s{5};
+        std::optional<std::string> interface_name;
 
-NOM_CONFIG(connection_config, address, timeout_s)
+        std::expected<void, std::string> validate() const
+        {
+            if (*timeout_s <= 0)
+                return std::unexpected("timeout_s must be positive");
+            return {};
+        }
+    };
+
+    NOM_CONFIG(connection_config, address, timeout_s, interface_name)
+
+    connection_config make_connection(const nlohmann::json& document)
+    {
+        auto candidate = document.get<connection_config>();
+        if (const auto result = candidate.validate(); !result)
+            throw std::runtime_error(result.error());
+        return candidate;
+    }
+}
 ```
 
-This is a declaration example; the application supplies the validation body.
-Nested config structures declare their own mappings. The framework also maps
-collections of supported values and converts config structures back to JSON.
-Custom adapters handle different JSON key names and domain types such as enums,
-durations, or paths.
+For `{"address": "localhost"}`, this returns a config with a timeout of `5` and
+an empty optional. `nlohmann::json serialized = config;` converts it back to JSON.
+Place `NOM_CONFIG` in the same namespace as the config type.
+
+Nested config structures declare their own mappings. Supported config types
+include booleans, strings, checked numeric types, nested configs, vectors, and
+string-keyed maps. Plain numeric members such as `int` and `double` are rejected
+at compile time; use `jint`, `juint`, or `jdouble` from `nom::jcfg::types`.
+
+Serialization and deserialization use nlohmann/json directly. Custom domain
+types can be explicitly enabled and supply normal `from_json`/`to_json` converters.
+
+Use `document.get<Config>()` to create a config, or `document.get_to(candidate)`
+to populate an existing candidate whose initial values should be preserved.
+Conversion failures propagate the converter's exceptions. Validation is a
+separate call.
 
 ## Required, defaulted, and optional fields
 
@@ -49,9 +91,11 @@ optional wrappers, the treatment of `null`, and conversion details.
 
 ## Validation boundaries
 
-Mapping checks JSON structure, required keys, value types, and safe conversion to
-C++ values. Application validation checks supported values, ranges, and relationships
-between fields.
+Mapping checks object structure and required keys, then uses each type's
+nlohmann/json converter. Checked numeric types validate the source before
+conversion: for example, `jint` rejects fractional JSON numbers rather than
+truncating them. Application validation checks domain-specific values, ranges,
+and relationships between fields.
 
 Config structures support `std::expected<void, std::string> validate() const`.
 Return `{}` on success or `std::unexpected(message)` on failure. The root config's
@@ -60,7 +104,9 @@ validation includes checks of its nested configs and propagates any error.
 After mapping the final runtime values, call the root config's `validate()` before
 using the config to initialize application services. Make the resulting config
 available to the application only after mapping and validation succeed. Mapping
-errors identify the JSON field; validation errors carry the supplied message.
+errors come from nlohmann/json or custom converters; validation errors carry the
+supplied message. Mapping into an existing candidate may change some members
+before a failure, so keep that candidate separate from the active config.
 
 Component settings can remain independent of JSON and of this library. Application
 adapters supply their mapping, so logger, transport, and strategy components can be
