@@ -8,4 +8,6 @@ JSON app config framework has 4 components supporting various config related wor
 1. [C++ config loader and app config resolution](app_config_binding.md);
 1. [JSON/C++ mapping](json_cpp_mapping.md);
 
-Implementation discussion: [Implementation details using nlohmann/json](nlohmann_implementation.md).
+[Implementation details using nlohmann/json](nlohmann_implementation.md).
+
+Implementation availability is tracked in the [repository status](../../README.md#implementation-status).

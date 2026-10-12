@@ -1,8 +1,5 @@
 # JSON/C++ mapping
 
-Draft for review. This document describes the application-facing mapping contract.
-`NOM_CONFIG` and the field policies below are proposed interfaces, not implemented yet.
-
 Mapping connects JSON values to application-owned C++ config structures. The
 [loader](app_config_binding.md#loading-and-overrides) handles config resolution,
 reading, environment substitution, and runtime overrides. The mapping layer knows
@@ -63,7 +60,7 @@ validation includes checks of its nested configs and propagates any error.
 After mapping the final runtime values, call the root config's `validate()` before
 using the config to initialize application services. Make the resulting config
 available to the application only after mapping and validation succeed. Mapping
-errors should identify the JSON field; validation errors carry the supplied message.
+errors identify the JSON field; validation errors carry the supplied message.
 
 Component settings can remain independent of JSON and of this library. Application
 adapters supply their mapping, so logger, transport, and strategy components can be

@@ -1,10 +1,8 @@
 # Implementation details using nlohmann/json
 
-Draft for review. This document discusses implementation choices
-when using nlohmann/json for the [Nomisma mapping contract](json_cpp_mapping.md).
-The repository includes
-nlohmann/json 3.12.0; `NOM_CONFIG`, the default wrapper, and the checked mapping
-described below are not implemented yet.
+This document describes the use of nlohmann/json for the
+[Nomisma mapping contract](json_cpp_mapping.md). The repository includes
+nlohmann/json 3.12.0.
 
 ## Overview of nlohmann/json facilities
 
@@ -43,15 +41,15 @@ nlohmann::json serialized = config;
 | `get<T>()` | Creates a new value and invokes its converter. |
 | `get_to(existing)` | Passes an existing value to its converter. Preserving its defaults still depends on that converter. |
 
-`NOM_CONFIG` needs its own member reader and writer to apply the presence and
-conversion rules below. Aliasing either stock macro would not provide those rules.
+`NOM_CONFIG` uses its own member reader and writer to apply the presence and
+conversion rules below. Neither stock macro provides those rules.
 Custom converters must follow the same rules when reading their own members.
 
 ## Default and optional wrappers
 
 Use an ordinary member for a required value, a default wrapper for an omittable
 value with a C++ default, and `std::optional<T>` for a value that can be absent.
-The proposed default-wrapper name is `nom::jcfg::default_value<T>`:
+The default wrapper is `nom::jcfg::default_value<T>`:
 
 ```cpp
 struct connection_config
@@ -66,7 +64,6 @@ struct connection_config
 NOM_CONFIG(connection_config, address, timeout_s, interface_name)
 ```
 
-This is proposed application syntax, not a compilable example of the current library.
 In this example, `address` is required, omitted `timeout_s` keeps `5`, and omitted
 `interface_name` remains empty.
 
@@ -125,9 +122,9 @@ The stock numeric converters can silently truncate or wrap values. For example,
 converting `1.5` to an integer can produce `1`, and converting `-1` to `uint32_t`
 can produce `4294967295`. A later `validate()` cannot recover the original value.
 
-The proposed Nomisma converter checks the source value before conversion:
+The Nomisma converter checks the source value before conversion:
 
-| C++ destination | Proposed acceptance rule |
+| C++ destination | Acceptance rule |
 |---|---|
 | Integer | JSON integer within the destination's range; reject floating-point values, including `1.0`, and booleans. Unsigned destinations also reject negative values. |
 | Floating-point | JSON number that converts to a finite, in-range result; ordinary floating-point rounding is allowed. |

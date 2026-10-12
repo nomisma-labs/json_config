@@ -1,7 +1,7 @@
 # Build system integration
 
-Draft for review. Config collection already exists in the shared CMake kit;
-generation and its build/install integration below are proposed additions.
+The shared CMake kit handles config collection. `json_config` defines generation,
+config targets, test registration, and installation of generated configs.
 
 ## Collection
 
@@ -12,13 +12,13 @@ An application declared with `nom_app()` automatically collects its adjacent
 nom_app(md_capture SOURCES main.cpp BUILD_FOR dev ci)
 ```
 
-The current [kit implementation](../../cmake/kit/api/targets.cmake) provides:
+The [kit collector](../../cmake/kit/api/targets.cmake) and config generator use these locations:
 
 | Source or artifact | Build location |
 |---|---|
 | Executable | `build/<preset>/bin/md_capture` |
 | `apps/md/md_capture/config/` | `build/<preset>/config/md_capture/` |
-| Generated `prod` config, proposed | `build/<preset>/genconfig/prod/md_capture.json` |
+| Generated `prod` config | `build/<preset>/genconfig/prod/md_capture.json` |
 
 Collection refreshes the destination whenever the app builds, including removing
 files deleted from the source directory. Executables declared in the same source
@@ -41,7 +41,7 @@ The build preset selects applications and compiler settings; a jcfg section
 selects application configuration. For example, a `dev` build may generate `prod`
 configs. These selections must not be implicitly tied together.
 
-The proposed `json_config` CMake helper registers:
+The `json_config` CMake helper registers:
 
 | Setting | Example |
 |---|---|
@@ -51,7 +51,7 @@ The proposed `json_config` CMake helper registers:
 | Generator command | Discovered Python interpreter plus `jcfggen.py` |
 
 Select sections explicitly. Resolve output filenames from jcfg metadata through
-the generator's [listing operation](config_generation.md#proposed-command-line),
+the generator's [listing operation](config_generation.md#command-line),
 so the app's CMake file does not repeat `jcfg.gen_file`. A change to section names
 or output filenames must refresh that output plan.
 
@@ -59,8 +59,8 @@ Config-generation CMake scripts and functions belong in `json_config`, including
 registration, build dependencies, and installation of generated outputs.
 `cmake_template` provides the existing config collector and remains unaware of
 generation. Client repositories use the helpers supplied by `json_config` and
-declare their app settings. The helper's exact CMake signature will be reviewed
-with the implementation.
+declare their app settings. The helper's exact CMake signature will be defined
+during implementation.
 
 ## Build sequence
 
@@ -87,7 +87,7 @@ generated files; C++ type and application validation happen when the app loads t
 
 ## Repository-wide config target
 
-The proposed `config` target runs all config collection and generation tasks
+The `config` target runs all config collection and generation tasks
 registered in the current build tree. It includes apps that only collect ordinary
 JSON files and apps whose executables are excluded from the normal build by
 `BUILD_FOR`. Generation uses the sections selected in each app's registration.
@@ -103,7 +103,7 @@ run once, and any collection or generation error fails the target.
 
 ## Testing generated configs
 
-`json_config` should provide an opt-in CMake helper,
+`json_config` defines an opt-in CMake helper,
 `config_test(app_name config_section)`, for registering config checks with CTest:
 
 ```cmake
@@ -120,7 +120,7 @@ the size of their test suite.
 
 ## Cleaning build configs
 
-The proposed `clean_config` target removes all collected and generated configs
+The `clean_config` target removes all collected and generated configs
 for the current build tree, including current outputs and files left by renamed
 or removed apps or sections. It deletes both `build/<preset>/config/` and
 `build/<preset>/genconfig/`, together with generation success records, without
@@ -143,8 +143,7 @@ directory property.
 
 When installation is enabled, the current kit installs selected executables under
 `<prefix>/bin/` and their collected sources under `<prefix>/config/<app-directory>/`.
-The proposed generation
-integration additionally installs its selected outputs under
+The generation integration additionally installs its selected outputs under
 `<prefix>/genconfig/<section>/<gen_file>`.
 
 Build before installing. Installation must reject a missing success record,

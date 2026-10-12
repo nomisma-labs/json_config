@@ -1,8 +1,5 @@
 # App/Config binding
 
-Draft for review. This document proposes the C++ config locator and loader
-behavior; their public API is not implemented yet.
-
 The locator chooses a JSON file. The loader parses it, applies runtime
 substitution and overrides, then maps and validates the application config.
 C++ does not interpret jcfg inheritance, imports, delete, or override instructions.
@@ -14,7 +11,7 @@ optional explicit key supplied by the application. Automatic file lookup uses
 `<key>.json`. If `jcfg.gen_file` chooses another filename, select that file
 explicitly; the locator does not read jcfg metadata to infer it.
 
-Proposed lookup order:
+Lookup order:
 
 | Priority | Source | Meaning | Value |
 |---|---|---|---|
@@ -46,7 +43,7 @@ NOM_CONFIG_DIR=../config build/dev/bin/md_capture
 The last command finds the collected default at `config/md_capture/md_capture.json`.
 The locator does not automatically choose between `dev`, `ci`, and `prod` sections.
 
-The caller should be able to supply the resolved executable path. A convenience
+The caller can supply the resolved executable path. A convenience
 adapter may obtain it through a library-local OS utility; `argv[0]` alone may be a
 bare command name. Keep OS-specific executable discovery behind that utility,
 with a future move to a shared `core/util/os.h` facility.
@@ -107,18 +104,18 @@ It must not consume unrelated application arguments.
 
 Return the selected path and selection source with the load result, so the app can
 report which config it used. For hard-wired config, report that source without a
-file path. Failures should identify the loading stage and relevant
+file path. Failures identify the loading stage and relevant
 file or JSON Pointer. The library reports errors to its caller; the application's
 entry point chooses logging and exit behavior. No logger or assembly dependency is
 required to load config.
 
-`--check-config` should run the same loading and validation steps, report success
-or failure, and exit before starting application services. Successful output can
+`--check-config` runs the same loading and validation steps, reports success
+or failure, and exits before starting application services. Successful output can
 identify the selected file without dumping config values. Detailed printing and
 its treatment of sensitive fields remain a separate interface decision.
 
 The public C++ entry point belongs in the `nom.json_config` module. Exact function
-and option type names remain for API review.
+and option type names will be defined during implementation.
 
 ## Hard-wired config
 

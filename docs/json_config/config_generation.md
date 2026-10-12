@@ -1,12 +1,9 @@
 # Config generation
 
-Draft for review. The commands and behavior below describe the proposed tool;
-`jcfggen.py` is not implemented yet. The [jcfg definition](jcfg.md) owns the
-language rules.
-
 `jcfggen.py` produces application JSON from jcfg sources. It can run directly or
 through the [build system](build_system_integration.md), using Python 3.10+ and
 the standard library. No Python package installation is needed for this tool.
+The [jcfg definition](jcfg.md) owns the language rules.
 
 ## Inputs and outputs
 
@@ -31,7 +28,7 @@ Two results claiming the same output path are an error. Output section names and
 filenames must stay within the output directory; absolute output paths and path
 traversal are rejected. Input and output locations must be separate.
 
-## Proposed command line
+## Command line
 
 | Argument | Meaning |
 |---|---|

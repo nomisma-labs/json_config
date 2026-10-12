@@ -6,13 +6,17 @@ It shares its design with [toml_config](https://github.com/nomisma-labs/toml_con
 with similar capabilities planned for both format implementations.
 <!-- repo-description:end -->
 
-The planned scope includes layered configuration generation with a Python tool
+The scope includes layered configuration generation with a Python tool
 (`jcfggen.py`), C++ config resolution, JSON/C++ mapping, and build-system
 integration for collecting and generating app configs.
 
-This repository currently contains the initialized `cmake_template` scaffold and
-the template's pinned nlohmann/json dependency. The configuration generator and
-C++ library are still to be implemented.
+## Implementation status
+
+The [configuration documentation](docs/json_config/README.md) defines the library's
+behavior. This repository currently contains the initialized `cmake_template`
+scaffold, its config collector, and the pinned nlohmann/json dependency. The
+configuration generator, C++ library, and generation-specific CMake helpers are
+still to be implemented.
 
 ## Build
 
