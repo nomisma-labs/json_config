@@ -294,7 +294,12 @@ environment. Change shared mechanisms in the template, then synchronize them int
   subproject (nlohmann_json in cmake_template), or only its include directory when it doesn't.
   Use a module wrapper when it gives a useful, supported API boundary; otherwise include
   the dependency's headers where needed. Our library APIs belong in named modules.
-- **System libraries** (Boost, OpenSSL, …): `find_package(<Package> REQUIRED)`.
+- **Boost:** the top-level `CMakeLists.txt` calls `nom_find_boost()`. Link `Boost::program_options`,
+  `Boost::filesystem` or `Boost::iostreams` where they are used, include their headers before
+  imports or in a module unit's global module fragment, and add `Boost` to
+  `nom_install_package(DEPENDENCIES …)` when exported targets link them. cmake_template's
+  `apps/boost_example/` uses all three.
+- **Other system libraries** (OpenSSL, …): `find_package(<Package> REQUIRED)`.
 
 ## An experiment
 

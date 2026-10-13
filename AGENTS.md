@@ -9,6 +9,7 @@ tests are implemented. Config discovery and runtime loading remain to be added.
 The public C++ API is `nom.json_config`, with `NOM_CONFIG` in
 `<json_config/config.h>`. The config collector and nlohmann/json
 dependency are inherited from `cmake_template`.
+So is Boost (program_options, filesystem and iostreams), found by `nom_find_boost()`.
 <!-- repo-description:end -->
 
 Read and follow the rules every Nomisma repo shares: @docs/kit/agents.md

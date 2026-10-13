@@ -49,6 +49,7 @@ to clear both the main build and the nested integration-test builds that cache t
 | Ninja | 1.11 or newer | generator (Makefiles can't build modules) |
 | Python | 3.10 or newer; 3.14.4 locally | repository scripts use the standard library; optional wheel builds use the separate environment below |
 | Catch2 | 3 (system package, or a pinned download) | tests |
+| Boost | 1.90 or newer; Ubuntu packages `libboost-program-options-dev`, `libboost-filesystem-dev`, `libboost-iostreams-dev` (1.90.0) | program options, filesystem and iostreams in every repo |
 
 Only the versioned Clang names exist on Ubuntu (`clang++-19`, not `clang++`), so presets and
 scripts name them explicitly. The installed GCC package is a development snapshot rather than
@@ -182,9 +183,10 @@ The entry point provides:
 | `nom_python_module(<target> MODULE_NAME <name> PACKAGE <package> SOURCES … [DEPS …] [RUNTIME_LIBRARIES …])` | Linux Python extension and explicitly bundled shared libraries, installed through the `nom_python` component. |
 | `nom_c2test(<suite> SOURCES … [DEPS …])` | Catch2 executable `<project>_<suite>`, registered with CTest. Needs `nom_find_catch2()`. |
 | `nom_library_usage_tests(<dir> [OPTIONS …])` | Integration tests: build and run a separate project using this library as an installed package and from source (see Tests). |
-| `nom_install_package(TARGETS … [DEPENDENCIES …])` | Install rules and `<project>-config.cmake`, so consumers can `find_package(<project>)` and link `nom::<target>`. |
+| `nom_install_package(TARGETS … [DEPENDENCIES …])` | Install rules and `<project>-config.cmake`, so consumers can `find_package(<project>)` and link `nom::<target>`. The config finds `DEPENDENCIES` first, with the version and components a kit service found them with. |
 | `nom_require_submodule(<path>)` | Fails early, with the fix, when a submodule wasn't checked out. |
 | `nom_find_catch2()` | The system Catch2 3, otherwise a pinned download; called at the project root when tests are enabled, before code directories. |
+| `nom_find_boost()` | The system Boost 1.90 or newer with `Boost::program_options`, `Boost::filesystem` and `Boost::iostreams`; called at the project root, before code directories. |
 
 `nom_c2test` is specific to Catch2. Future test frameworks can have their own helpers
 without changing `nom_lib` or `nom_app`.
@@ -218,7 +220,12 @@ Named modules are part of every Nomisma library build.
     installed package brings nlohmann with it.
   - Header-only libraries whose CMake project doesn't suit a subproject are used through
     their include directory only; their CMake project is never run.
-- **System libraries** (Boost, OpenSSL, later): `find_package` only.
+- **Boost:** `nom_find_boost()`, from system packages: `Boost::program_options`,
+  `Boost::filesystem` and `Boost::iostreams`. Link the ones a target uses, and list `Boost` in
+  `nom_install_package(DEPENDENCIES …)` when exported targets link them; the package config then
+  finds the same components. To use another Boost library, add it to `nom_find_boost()` in
+  cmake_template, so every repo and package finds the same set.
+- **Other system libraries** (OpenSSL, later): `find_package` only.
 - **Catch2:** `nom_find_catch2()`.
 - **Co-developing two repos:** set `FETCHCONTENT_SOURCE_DIR_<NAME>` (upper-case name) to a local
   checkout, in `CMakeUserPresets.json` as above. No submodule bump is needed until you commit.
