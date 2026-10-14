@@ -1,0 +1,5 @@
+{
+    "endpoint": "https://example.test/feed",
+    "timeout_s": 10,
+    "enabled": true
+}

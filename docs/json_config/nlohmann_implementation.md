@@ -4,6 +4,10 @@ This document describes the use of nlohmann/json for the
 [Nomisma mapping contract](json_cpp_mapping.md). The repository includes
 nlohmann/json 3.12.0.
 
+`<json_config/nlohmann_json.h>` includes the native library and is also included
+by `config.h`. It scopes a GCC 16 release-build `-Warray-bounds` workaround to
+nlohmann's diagnostic parent tracking; application warnings remain enabled.
+
 The [config types design note](config_types_design.md) explains why the special
 types were introduced, their current dependency on JSON, and a possible future
 separation. That separation is deferred.
@@ -16,7 +20,7 @@ structures. This example uses our checked integer type with a native nlohmann
 macro:
 
 ```cpp
-#include <nlohmann/json.hpp>
+#include <json_config/nlohmann_json.h>
 
 #include <string>
 

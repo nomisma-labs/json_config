@@ -59,6 +59,9 @@ For `{"address": "localhost"}`, this returns a config with a timeout of `5` and
 an empty optional. `nlohmann::json serialized = config;` converts it back to JSON.
 Place `NOM_CONFIG` in the same namespace as the config type.
 
+The runnable [config_example](../../apps/config_example/README.md) combines
+`NOM_CONFIG`, defaulted and optional members, and root validation with the loader.
+
 Nested config structures declare their own mappings. Supported config types
 include booleans, strings, checked numeric types, nested configs, vectors, and
 string-keyed maps. Plain numeric members such as `int` and `double` are rejected

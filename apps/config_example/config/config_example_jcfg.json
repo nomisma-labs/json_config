@@ -1,0 +1,16 @@
+[
+    {
+        "jcfg": {
+            "name": "dev",
+            "import": "config_example.json"
+        }
+    },
+    {
+        "jcfg": {
+            "name": "prod",
+            "extend": "dev"
+        },
+        "endpoint": "https://example.test/production-feed",
+        "timeout_s": 30
+    }
+]

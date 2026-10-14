@@ -70,7 +70,7 @@ class config_build_tests(unittest.TestCase):
             options += f" ENVIRONMENT {environment}"
         if build_with_app:
             options += " BUILD_WITH_APP"
-        return f"jcfg_generate({app} SOURCE {source}{options})\n"
+        return f"nom_jcfg_generate({app} SOURCE {source}{options})\n"
 
     def project(self):
         body = f"""cmake_minimum_required(VERSION 3.30)
@@ -129,7 +129,7 @@ include("{repository}/cmake/json_config/config.cmake")
         self.write_json(plain.parent / "plain.json", {"ordinary": True})
         self.add_app("excluded", excluded=True)
         self.registration = self.register("capture", sections="dev prod") + self.register("excluded")
-        self.registration += "config_test(capture prod)\n"
+        self.registration += "nom_jcfg_test(capture prod)\n"
         self.configure()
         self.build_targets("config")
         for app, filename in (("capture", "capture_jcfg.json"), ("plain", "plain.json"),
@@ -363,7 +363,7 @@ include("{repository}/cmake/json_config/config.cmake")
         self.registration = (self.register("generate_jcfg_capture", source="shared_jcfg.json")
                              + self.register("capture", source="shared_jcfg.json"))
         diagnostic = self.configure(success=False)
-        self.assertIn("target fixture_generate_jcfg_capture already exists", diagnostic)
+        self.assertIn("target fixture_generate_jcfg_capture already exists", " ".join(diagnostic.split()))
 
     def test_conflicting_shared_registration_is_rejected(self):
         self.add_app("shared", names=["first", "second"], document=[

@@ -4,4 +4,5 @@
 # Integration checks for library usage and installation (docs/kit/howto.md#library-usage-integration-tests).
 add_subdirectory(jcfggen)
 add_subdirectory(config_build)
+add_subdirectory(config_args)
 nom_library_usage_tests(library_usage)

@@ -20,6 +20,18 @@ The [kit collector](../../cmake/kit/api/targets.cmake) and config generator use 
 | `apps/md/md_capture/config/` | `build/<preset>/config/md_capture/` |
 | Generated `prod` config | `build/<preset>/genconfig/prod/md_capture.json` |
 
+[config.cmake](../../cmake/json_config/config.cmake) defines absolute build paths:
+
+| Constant | Path |
+|---|---|
+| `NOM_COLLECTION_CONFIG_DIR` | `${CMAKE_BINARY_DIR}/config` |
+| `NOM_GEN_CONFIG_DIR` | `${CMAKE_BINARY_DIR}/genconfig` |
+| `NOM_CONFIG_BUILD_DIR` | `${CMAKE_BINARY_DIR}/CMakeFiles/json_config` (plan and records) |
+
+The helpers use these constants for generation, tests, and cleanup. Installation
+preserves the config layout relative to the install prefix. Making collection
+configurable will also require updating the shared kit's collector.
+
 Collection refreshes the destination whenever the app builds, including removing
 files deleted from the source directory. Executables declared in the same source
 directory share one collection target. App directory basenames must be unique in
@@ -49,7 +61,7 @@ from the `json_config` checkout. Register generation after declaring the app:
 include("${json_config_SOURCE_DIR}/cmake/json_config/config.cmake")
 
 nom_app(md_capture SOURCES main.cpp BUILD_FOR dev ci)
-jcfg_generate(md_capture
+nom_jcfg_generate(md_capture
     SOURCE md_capture_jcfg.json
     ENVIRONMENT "NOM_CONFIG_LIB=${PROJECT_SOURCE_DIR}/config_lib")
 ```
@@ -58,7 +70,7 @@ jcfg_generate(md_capture
 `jcfg.generate=true` (the default). To select a subset, use:
 
 ```cmake
-jcfg_generate(md_capture SOURCE md_capture_jcfg.json SECTIONS ci prod)
+nom_jcfg_generate(md_capture SOURCE md_capture_jcfg.json SECTIONS ci prod)
 ```
 
 Explicitly selecting a section with `jcfg.generate=false` is an error.
@@ -77,7 +89,7 @@ with an ordinary default JSON config and does not require generation-time donors
 or variables. Run `ninja config` to generate all registered configs, or build
 `<project>_generate_jcfg_<app>` to collect and generate one app's configs without
 compiling it, for example `json_config_generate_jcfg_md_capture` in a project
-named `json_config`. Add the optional `BUILD_WITH_APP` flag to `jcfg_generate()`
+named `json_config`. Add the optional `BUILD_WITH_APP` flag to `nom_jcfg_generate()`
 when building that app should also generate its configs. This choice is explicit
 and independent of the preset.
 
@@ -92,7 +104,7 @@ Config-generation CMake scripts and functions belong in `json_config`, including
 registration, build dependencies, and installation of generated outputs.
 `cmake_template` provides the existing config collector and remains unaware of
 generation. Client repositories use the helpers supplied by `json_config` and
-declare their app settings through `jcfg_generate()`.
+declare their app settings through `nom_jcfg_generate()`.
 The app name is the short name supplied to `nom_app()` in the same project.
 One app registers one source; apps sharing that source must use the same section
 selection and explicit environment. Source, section and output names containing
@@ -147,10 +159,10 @@ run once, and any collection or generation error fails the target.
 ## Testing generated configs
 
 `json_config` defines an opt-in CMake helper,
-`config_test(app_name config_section)`, for registering config checks with CTest:
+`nom_jcfg_test(app_name config_section)`, for registering config checks with CTest:
 
 ```cmake
-config_test(md_capture prod)
+nom_jcfg_test(md_capture prod)
 ```
 
 Each call registers one test that runs the app with the section's generated config
@@ -161,9 +173,12 @@ Build the app and generate its config before running CTest, for example with
 `ninja all config`. Tests are registered
 only for explicitly requested app/section pairs, allowing projects to control
 the size of their test suite.
-Call `config_test()` after `jcfg_generate()`, inside the project's test-enabled
+Call `nom_jcfg_test()` after `nom_jcfg_generate()`, inside the project's test-enabled
 condition. The section must be included in that app's generation selection.
 Test names are `<project>_<app>_config_<section>` and carry the `config` label.
+
+See [config_example](../../apps/config_example/README.md) for a complete app using
+`nom_jcfg_generate()` and `nom_jcfg_test()` with `dev` and `prod` sections.
 
 ## Cleaning build configs
 

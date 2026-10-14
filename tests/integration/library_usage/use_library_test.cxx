@@ -6,6 +6,8 @@
 #include <expected>
 #include <optional>
 #include <string>
+#include <string_view>
+#include <vector>
 
 import nom.json_config;
 
@@ -85,6 +87,27 @@ int main()
         {
             return 6;
         }
+    }
+
+    nom::jcfg::config_options options;
+    options.executable_path = nom::jcfg::current_executable_path();
+    options.config_key = "nom_library_usage_hard_wired";
+    options.overrides = {{"/connection/address", "wss://example.test/runtime"}, {"/connection/timeout_s", "15"}};
+    const auto loaded = nom::jcfg::load_config<consumer::app_config>(
+        options, [](std::string_view) -> std::optional<std::string> { return std::nullopt; });
+    if (loaded.location.source != nom::jcfg::config_source::hard_wired || loaded.location.path ||
+        loaded.value.connection->address != "wss://example.test/runtime" || *loaded.value.connection->timeout_s != 15)
+    {
+        return 7;
+    }
+    const char* arguments[] = {"consumer", "--set=/connection/timeout_s=15", "--verbose", "--check-config"};
+    const auto parsed = nom::jcfg::parse_config_arguments(4, arguments);
+    if (!parsed.options.check_config || parsed.options.overrides.size() != 1 ||
+        parsed.options.overrides.front().pointer != "/connection/timeout_s" ||
+        parsed.options.overrides.front().value != "15" ||
+        parsed.remaining_arguments != std::vector<std::string>{"--verbose"})
+    {
+        return 8;
     }
     return 0;
 }

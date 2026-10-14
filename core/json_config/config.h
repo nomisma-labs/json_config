@@ -3,8 +3,17 @@
 
 #pragma once
 
-#include <nlohmann/json.hpp>
+#include <json_config/nlohmann_json.h>
 #include <type_traits>
+
+// Evaluate the application's definition at its call site, outside compiled library code.
+#define NOM_JCFG_STRINGIFY_IMPL(value) #value
+#define NOM_JCFG_STRINGIFY(value) NOM_JCFG_STRINGIFY_IMPL(value)
+#ifdef NOM_CONFIG_KEY
+#define NOM_CONFIG_KEY_VALUE NOM_JCFG_STRINGIFY(NOM_CONFIG_KEY)
+#else
+#define NOM_CONFIG_KEY_VALUE ""
+#endif
 
 #define NOM_JCFG_READ_MEMBER(member)                                                                                   \
     static_assert(::nom::jcfg::detail::is_config_member<std::remove_cvref_t<decltype(nom_jcfg_destination.member)>>,   \

@@ -22,7 +22,7 @@ The [CMake helpers](docs/json_config/build_system_integration.md) register gener
 config tests and installation, and provide `config` and `clean_config` targets.
 App builds collect configs; generation is requested with `config` for the whole
 build or `<project>_generate_jcfg_<app>` for one app, or opted into with
-`jcfg_generate(... BUILD_WITH_APP)`. Omit `SECTIONS` to generate all sections with
+`nom_jcfg_generate(... BUILD_WITH_APP)`. Omit `SECTIONS` to generate all sections with
 generation enabled. The helpers reuse the existing
 `cmake_template` config collector.
 
@@ -33,8 +33,17 @@ defaulted, and optional members using nlohmann/json. It enforces supported confi
 types, including checked numeric types `jint`, `juint`, and `jdouble`.
 These types and `defaulted<T>` belong to `nom::jcfg`, with convenience aliases in
 `nom::jcfg::types`.
-Mapping and application validation are separate. Config discovery, file loading,
-runtime substitution, and command-line overrides remain to be implemented.
+Mapping and application validation are separate. The
+[C++ locator and loader](docs/json_config/app_config_binding.md) resolve a config,
+read JSON, substitute runtime variables, apply command-line overrides, then map
+and validate the root C++ type. Hard-wired defaults are supported when lookup finds
+no file. `load_config<Config>()` returns the typed value and selected source/path.
+The command-line adapter uses Boost.Program_options through the shared build kit.
+
+Example applications have their own build, usage, and test instructions:
+
+- [config_example](apps/config_example/README.md) — config loading, mapping, and generated config tests.
+- [config_args_example](apps/config_args_example/README.md) — application arguments alongside config arguments.
 
 Generate one config from the complete example:
 

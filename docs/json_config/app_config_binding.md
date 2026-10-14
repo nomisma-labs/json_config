@@ -43,10 +43,12 @@ NOM_CONFIG_DIR=../config build/dev/bin/md_capture
 The last command finds the collected default at `config/md_capture/md_capture.json`.
 The locator does not automatically choose between `dev`, `ci`, and `prod` sections.
 
-The caller can supply the resolved executable path. A convenience
-adapter may obtain it through a library-local OS utility; `argv[0]` alone may be a
-bare command name. Keep OS-specific executable discovery behind that utility,
-with a future move to a shared `core/util/os.h` facility.
+The caller can supply the resolved executable path through
+`config_options::executable_path`. Otherwise, `current_executable_path()` obtains
+it through a library-local OS utility; `argv[0]` alone may be a bare command name.
+The private boundary is `core/json_config/util/os.h`, with its Linux implementation
+selected by CMake. When a common core OS library is available, move that operation
+there and keep the config locator calling the same boundary.
 
 When two or more variants of an app (e.g. `mm_strategy` and `mm_strategy_perf`)
 use the same config (`mm_strategy.json`), they can override `<key>` for automatic
@@ -56,8 +58,10 @@ config resolution:
 nom_app(mm_strategy_perf SOURCES main.cpp COMPILE_OPTIONS -DNOM_CONFIG_KEY=mm_strategy)
 ```
 
-The application stringifies `NOM_CONFIG_KEY` and passes it through the config
-library's config-key override parameter. Explicit `--config` and `NOM_CONFIG`
+`<json_config/config.h>` supplies `NOM_CONFIG_KEY_VALUE`, which stringifies the
+application's `NOM_CONFIG_KEY` definition (or expands to an empty string when it is
+not defined). Pass it to `parse_config_arguments()` or set
+`config_options::config_key` directly. Explicit `--config` and `NOM_CONFIG`
 selections retain their precedence.
 
 ## Loading and overrides
@@ -89,6 +93,9 @@ Missing override targets are errors. Repeated overrides of the same target apply
 in order, with the last successful assignment taking precedence.
 
 The loader selects the most appropriate data type for each provided override value.
+Each override must map successfully before the next is attempted; a later override
+cannot repair another malformed field that prevents the current mapping probe.
+Application validation runs only after all overrides have been applied.
 
 ```bash
 build/dev/bin/md_capture --config build/dev/genconfig/prod/md_capture.json \
@@ -114,8 +121,43 @@ or failure, and exits before starting application services. Successful output ca
 identify the selected file without dumping config values. Detailed printing and
 its treatment of sensitive fields remain a separate interface decision.
 
-The public C++ entry point belongs in the `nom.json_config` module. Exact function
-and option type names will be defined during implementation.
+Import `nom.json_config` and link `nom::json_config`. The main entry point is
+`load_config<Config>(options)`, returning `loaded_config<Config>` with `.value`
+and `.location` (`.path` and `.source`). The root type must provide
+`validate() const` returning `std::expected<void, std::string>`.
+
+```cpp
+const auto arguments = nom::jcfg::parse_config_arguments(argc, argv, NOM_CONFIG_KEY_VALUE);
+const auto loaded = nom::jcfg::load_config<app_config>(arguments.options);
+```
+
+The adapter returns app-owned arguments in `.remaining_arguments`, preserves `--`
+and everything following it, and accepts `--config` once. It uses
+Boost.Program_options with exact long option names; `--config=FILE` and
+`--set=POINTER=value` are also accepted. The application checks
+`.options.check_config` to exit after successful loading, before starting services.
+See the [complete application example](../../apps/config_example/README.md).
+
+The [application-argument example](../../apps/config_args_example/README.md) passes
+`.remaining_arguments` to its own Boost.Program_options parser before calling
+`load_config()`. Handle application help and argument validation at this point,
+so help does not require a readable config and invalid app arguments fail before
+config loading. Both parsers and the application startup remain controlled by
+`main()`.
+
+| Function | Purpose |
+|---|---|
+| `locate_config(options)` | Choose a file or the hard-wired source. |
+| `read_config(location)` | Read a JSON object, or return `{}` for the hard-wired source. |
+| `substitute_runtime_variables(document)` | Expand runtime placeholders in JSON values. |
+| `apply_config_overrides(document, overrides, probe)` | Apply ordered overrides using a caller-supplied mapping check. |
+| `load_config<Config>(options)` | Run the full sequence, native nlohmann mapping, and root validation. |
+
+Location, substitution, and typed loading accept an optional `environment_lookup`
+callback; by default they read the process environment. Mapping checks use native
+nlohmann conversion, for example `document.get<Config>()`, independently of the
+locator. `config_error` reports `.stage`, `.file`, `.pointer`, and an explanatory
+`what()` message. Nlohmann mapping errors retain their diagnostic JSON paths.
 
 ## Hard-wired config
 

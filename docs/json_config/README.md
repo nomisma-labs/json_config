@@ -10,6 +10,11 @@ JSON app config framework has 4 components supporting various config related wor
 
 [Implementation details using nlohmann/json](nlohmann_implementation.md).
 
+Runnable examples have their own build, usage, and test instructions:
+[config_example](../../apps/config_example/README.md) covers loading, mapping,
+and generated sections; [config_args_example](../../apps/config_args_example/README.md)
+adds application arguments through Boost.Program_options.
+
 [Config types and serialization dependencies](config_types_design.md) explains
 the current coupling and a possible future separation, which is deferred.
 
