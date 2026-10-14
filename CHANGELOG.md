@@ -6,6 +6,8 @@ and versions follow [Semantic Versioning](https://semver.org); how to release:
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-10-15
+
 The first complete application configuration workflow: define layered configs in
 **jcfg**, generate ordinary JSON, and load validated C++ configuration structures.
 
