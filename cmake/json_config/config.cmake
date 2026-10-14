@@ -52,7 +52,11 @@ endfunction()
 # Register after nom_app(). Omit SECTIONS to select all generation-enabled sections.
 # Run via config or <project>_generate_jcfg_<app>; BUILD_WITH_APP also attaches it
 # to this app. Apps sharing a source must use identical generation settings.
+# Does nothing when nom_build_apps is OFF.
 function(nom_jcfg_generate app)
+    if(NOT nom_build_apps)
+        return()
+    endif()
     cmake_parse_arguments(PARSE_ARGV 1 arg "BUILD_WITH_APP" "SOURCE" "SECTIONS;ENVIRONMENT")
     if(DEFINED arg_UNPARSED_ARGUMENTS OR DEFINED arg_KEYWORDS_MISSING_VALUES
        OR NOT DEFINED arg_SOURCE OR arg_SOURCE STREQUAL ""
@@ -205,7 +209,11 @@ function(nom_jcfg_generate app)
 endfunction()
 
 # nom_jcfg_test(<app> <section>) opts one generated config into CTest.
+# Requires nom_build_tests and nom_build_apps; otherwise no test is registered.
 function(nom_jcfg_test app section)
+    if(NOT nom_build_tests OR NOT nom_build_apps)
+        return()
+    endif()
     set(target "${PROJECT_NAME}_${app}")
     if(NOT TARGET "${target}")
         message(FATAL_ERROR "nom_jcfg_test(${app}): no such app")

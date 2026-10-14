@@ -87,11 +87,13 @@ the ordinary JSON file, and `prod`, which extends `dev` and changes `endpoint` t
 
 ```cmake
 nom_jcfg_generate(config_example SOURCE config_example_jcfg.json BUILD_WITH_APP)
-if(nom_build_tests)
-    nom_jcfg_test(config_example dev)
-    nom_jcfg_test(config_example prod)
-endif()
+nom_jcfg_test(config_example dev)
+nom_jcfg_test(config_example prod)
 ```
+
+The helpers check the project's options internally: generation requires
+`nom_build_apps`, and tests require both `nom_build_tests` and `nom_build_apps`.
+The separate override test keeps its guard because it uses `add_test()` directly.
 
 Omitting `SECTIONS` generates all enabled sections. `BUILD_WITH_APP` prepares the
 generated files whenever this app is built. Select a generated section explicitly:

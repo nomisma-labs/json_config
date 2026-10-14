@@ -17,6 +17,4 @@ nom_lib(json_config
 # Keep diagnostic paths available in our converters and source/package consumers.
 target_compile_definitions(json_config PUBLIC JSON_DIAGNOSTICS=1)
 
-if(nom_install)
-    nom_install_package(TARGETS json_config DEPENDENCIES nlohmann_json Boost)
-endif()
+nom_install_package(TARGETS json_config DEPENDENCIES nlohmann_json Boost)

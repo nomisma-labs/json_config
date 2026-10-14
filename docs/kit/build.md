@@ -86,7 +86,8 @@ The requirements file pins the packaging tools, including scikit-build-core. The
 environment and `--no-isolation` use those versions without creating another build environment.
 The repository's `pyproject.toml` selects the backend, derives the package version from CMake
 `project()` and enables `<PROJECT>_BUILD_PYTHON`. CMake's `nom_python` install component supplies
-the native package files. Python runtime dependencies remain separate package metadata.
+the native package files, independently of `<PROJECT>_INSTALL`; wheel builds disable the native
+C++ installation. Python runtime dependencies remain separate package metadata.
 
 Packaging is tested on Ubuntu 26.04 with GCC 16 and CPython 3.14.4. A wheel is built for that
 environment, with no claim of compatibility across Linux distributions or Python versions.
@@ -153,7 +154,7 @@ Presets set the shared cache variable `NOM_BUILD_PRESET`. A custom preset inheri
 selection unless it overrides that variable, so `dev-local` above still selects `dev` apps.
 Without a preset it defaults to `dev`; set `-DNOM_BUILD_PRESET=release` or `complete` when needed.
 This selects apps independently of `CMAKE_BUILD_TYPE`; `<PROJECT>_BUILD_APPS` still controls
-whether the apps directory participates. For every app with Clang, use
+whether app targets are created. For every app with Clang, use
 `cmake --preset clang -DNOM_BUILD_PRESET=complete`, then build that preset.
 
 ## compile_commands.json
@@ -191,15 +192,29 @@ The entry point provides:
 `nom_c2test` is specific to Catch2. Future test frameworks can have their own helpers
 without changing `nom_lib` or `nom_app`.
 
-The options, where `<PROJECT>` is the upper-case project name. Set them with `-D` on the command
-line; the CMake files read the variables:
+`nom_project_options()` constructs cache option names from the upper-case project name;
+for example, `project(prices)` produces `PRICES_BUILD_TESTS`. Set these options with `-D` on
+the command line. Their `nom_*` aliases belong to the calling directory and are inherited by
+its subdirectories. A dependency calling `nom_project_options()` establishes its own aliases,
+so the host's enabled tests or apps do not enable them in the dependency.
 
 | Option | Variable | Default | Controls |
 |---|---|---|---|
-| `<PROJECT>_BUILD_TESTS` | `nom_build_tests` | ON when top level | `tests/` |
-| `<PROJECT>_BUILD_APPS` | `nom_build_apps` | ON when top level | `apps/`, including the sandbox |
+| `<PROJECT>_BUILD_TESTS` | `nom_build_tests` | ON when top level, OFF as a dependency | test targets and registrations |
+| `<PROJECT>_BUILD_APPS` | `nom_build_apps` | ON when top level, OFF as a dependency | apps, including the sandbox and config collection |
 | `<PROJECT>_BUILD_PYTHON` | `nom_build_python` | OFF | optional Python bindings and wheel installation |
-| `<PROJECT>_INSTALL` | `nom_install` | ON | install rules and the package config |
+| `<PROJECT>_INSTALL` | `nom_install` | ON | native install rules and the package config |
+
+Public helpers return without creating targets or rules when their corresponding alias is OFF:
+`nom_app()` checks `nom_build_apps`, `nom_python_module()` checks `nom_build_python`,
+`nom_c2test()` and `nom_library_usage_tests()` check `nom_build_tests`, and
+`nom_install_package()` checks `nom_install`. App installation also requires `nom_install`;
+Python's `nom_python` component remains independent of it.
+
+Keep directory or caller guards for optional dependency discovery and for commands that modify
+targets or tests skipped by a helper, such as `set_tests_properties()`. Direct `add_test()` calls
+also need a `nom_build_tests` guard. A guard is unnecessary around a helper that handles the
+complete operation.
 
 In a superbuild each repo brings its own copy of the kit; the first one loaded wins, and a
 different version is reported as a warning.
@@ -298,7 +313,9 @@ cross-toolchain binary compatibility is not implied.
   `build/<preset>/tests/integration/library_usage/install`, then builds and runs the test project
   against that package with `find_package` (`<project>_library_usage_package`), and from source
   through `FetchContent` (`<project>_library_usage_source`). Both modes compile the same importing
-  consumer, including rebuilding installed module interfaces in package mode.
+  consumer, including rebuilding installed module interfaces in package mode. With `nom_install`
+  OFF, only the source-consumption test is registered. With `nom_build_tests` OFF, neither mode
+  is registered.
 
 ```bash
 ctest --preset dev                   # all tests

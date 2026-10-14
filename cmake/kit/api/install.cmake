@@ -12,7 +12,11 @@ include(CMakePackageConfigHelpers)
 # the version and components a kit service found them with (NOM_FIND_ARGS_<package>, which
 # nom_find_boost() records). Module interface sources are installed next to the headers;
 # consumers compile their own BMIs, since BMIs are specific to the compiler and its flags.
+# Does nothing when nom_install is OFF.
 function(nom_install_package)
+    if(NOT nom_install)
+        return()
+    endif()
     cmake_parse_arguments(PARSE_ARGV 0 arg "" "" "TARGETS;DEPENDENCIES")
     set(config_dir ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})
 

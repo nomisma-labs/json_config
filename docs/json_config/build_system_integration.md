@@ -74,6 +74,10 @@ nom_jcfg_generate(md_capture SOURCE md_capture_jcfg.json SECTIONS ci prod)
 ```
 
 Explicitly selecting a section with `jcfg.generate=false` is an error.
+`nom_jcfg_generate()` returns immediately when `nom_build_apps` is OFF, before
+looking up the app or validating generation arguments. Generation is independent
+of `nom_build_tests` and `nom_install`; installation rules for generated files
+still require `nom_install`.
 `ENVIRONMENT` supplies optional `NAME=value` assignments on top of the build
 process environment. The helper registers:
 
@@ -173,8 +177,9 @@ Build the app and generate its config before running CTest, for example with
 `ninja all config`. Tests are registered
 only for explicitly requested app/section pairs, allowing projects to control
 the size of their test suite.
-Call `nom_jcfg_test()` after `nom_jcfg_generate()`, inside the project's test-enabled
-condition. The section must be included in that app's generation selection.
+Call `nom_jcfg_test()` after `nom_jcfg_generate()`. The helper registers nothing
+unless both `nom_build_tests` and `nom_build_apps` are ON, so helper calls need no
+outer condition. The section must be included in that app's generation selection.
 Test names are `<project>_<app>_config_<section>` and carry the `config` label.
 
 See [config_example](../../apps/config_example/README.md) for a complete app using

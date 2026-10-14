@@ -96,11 +96,11 @@ include("{repository}/cmake/json_config/config.cmake")
             self.assertNotEqual(result.returncode, 0, output)
         return output
 
-    def configure(self, *, success=True):
+    def configure(self, *options, success=True):
         self.project()
         return self.run_command(cmake, "-S", self.source, "-B", self.build, "-G", "Ninja",
                                 f"-DCMAKE_CXX_COMPILER={compiler}", "-DNOM_BUILD_PRESET=dev",
-                                "-DFIXTURE_INSTALL=ON", success=success)
+                                "-DFIXTURE_INSTALL=ON", *options, success=success)
 
     def build_targets(self, *targets, success=True):
         selection = ["--target", *targets] if targets else []
@@ -118,6 +118,76 @@ include("{repository}/cmake/json_config/config.cmake")
 
     def read_generated(self, name):
         return json.loads(self.generated(name).read_text(encoding="utf-8"))
+
+    def test_apps_disabled_skip_unconditional_generation_and_config_tests(self):
+        self.add_app("capture")
+        self.registration = self.register("capture", source="../absent.json")
+        self.registration += """nom_jcfg_generate(absent)
+nom_jcfg_test(capture dev)
+nom_jcfg_test(absent missing)
+"""
+        self.configure("-DFIXTURE_BUILD_APPS=OFF", "-DFIXTURE_BUILD_TESTS=ON")
+        self.build_targets("config")
+        self.build_targets()
+        self.assertFalse((self.build / "config").exists())
+        self.assertFalse(self.generated("dev/capture.json").exists())
+        self.assertFalse(any((self.build / "bin").glob("*")))
+        tests = json.loads(self.run_command(ctest, "--test-dir", self.build, "--show-only=json-v1"))
+        self.assertEqual(tests["tests"], [])
+        self.build_targets("fixture_generate_jcfg_capture", success=False)
+        prefix = self.install()
+        self.assertFalse(list(prefix.rglob("*.json")))
+
+    def test_tests_and_install_disabled_leave_app_config_generation_enabled(self):
+        self.add_app("capture")
+        self.registration = self.register("capture", build_with_app=True)
+        self.registration += """nom_jcfg_test(capture dev)
+nom_jcfg_test(capture missing)
+nom_jcfg_test(absent missing)
+"""
+        self.configure("-DFIXTURE_BUILD_APPS=ON", "-DFIXTURE_BUILD_TESTS=OFF",
+                       "-DFIXTURE_INSTALL=OFF")
+        self.build_targets()
+        self.assertTrue((self.build / "bin/capture").is_file())
+        self.assertTrue((self.build / "config/capture/capture_jcfg.json").is_file())
+        self.assertEqual(self.read_generated("dev/capture.json"), {"value": "initial"})
+        tests = json.loads(self.run_command(ctest, "--test-dir", self.build, "--show-only=json-v1"))
+        self.assertEqual(tests["tests"], [])
+        prefix = self.install()
+        self.assertFalse(list(prefix.rglob("*.json")))
+        self.assertFalse((prefix / "bin/capture").exists())
+
+    def test_host_options_do_not_enable_dependency_apps_generation_or_tests(self):
+        self.add_app("host")
+        self.registration = self.register("host")
+        self.registration += """add_subdirectory(dependency)
+if(NOT nom_build_apps OR NOT nom_build_tests)
+    message(FATAL_ERROR "Dependency options changed the host settings")
+endif()
+nom_jcfg_test(host dev)
+"""
+        dependency = self.source / "dependency"
+        self.write(dependency / "CMakeLists.txt", """project(dependency LANGUAGES CXX)
+nom_project_options()
+add_subdirectory(apps/child)
+nom_jcfg_generate(child SOURCE absent.json)
+nom_jcfg_test(child dev)
+nom_c2test(unit SOURCES absent_test.cxx)
+""")
+        self.write(dependency / "apps/child/CMakeLists.txt", "nom_app(child SOURCES main.cpp)\n")
+        self.write(dependency / "apps/child/main.cpp", fixture_main)
+        self.write_json(dependency / "apps/child/config/child_jcfg.json", {
+            "jcfg": {"name": "dev"}, "value": "dependency",
+        })
+        self.configure("-DFIXTURE_BUILD_APPS=ON", "-DFIXTURE_BUILD_TESTS=ON")
+        self.build_targets("fixture_host", "config")
+        self.assertEqual(self.read_generated("dev/host.json"), {"value": "initial"})
+        self.assertFalse((self.build / "config/child").exists())
+        self.assertFalse(self.generated("dev/child.json").exists())
+        self.assertFalse((self.build / "dependency/bin/child").exists())
+        tests = json.loads(self.run_command(ctest, "--test-dir", self.build, "--show-only=json-v1"))
+        self.assertEqual([test["name"] for test in tests["tests"]], ["fixture_host_config_dev"])
+        self.run_command(ctest, "--test-dir", self.build, "--output-on-failure")
 
     def test_config_aggregate_collects_excluded_and_ordinary_apps_without_compiling(self):
         self.add_app("capture", document=[
