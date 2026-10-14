@@ -69,11 +69,11 @@ python3 tools/jcfggen.py --input-dir build/dev/config --app md_capture \
     --config prod --output-dir build/dev/genconfig
 ```
 
-To generate directly from the [complete example](examples/complete_config/md_capture_jcfg.json):
+To generate directly from the [complete example](../../apps/md_capture/config/md_capture_jcfg.json):
 
 ```bash
 python3 tools/jcfggen.py \
-    --source docs/json_config/examples/complete_config/md_capture_jcfg.json \
+    --source apps/md_capture/config/md_capture_jcfg.json \
     --config prod --output-dir build/dev/genconfig
 ```
 

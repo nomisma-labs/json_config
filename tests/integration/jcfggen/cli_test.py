@@ -268,10 +268,13 @@ class cli_tests(unittest.TestCase):
         self.assertIn(str(self.outputs / "dev/app.json"), result.stderr)
 
     def test_all_documented_expected_outputs(self):
-        sources = sorted(source for source in examples.glob("*/*_jcfg.json")
+        sources = sorted((source, source.parent / "genconfig")
+                         for source in examples.glob("*/*_jcfg.json")
                          if (source.parent / "genconfig").is_dir())
+        sources.append((repository / "apps/md_capture/config/md_capture_jcfg.json",
+                        examples / "complete_config/genconfig"))
         self.assertEqual(len(sources), 10)
-        for source in sources:
+        for source, expected_dir in sources:
             with self.subTest(example=source.parent.name):
                 self.outputs = self.directory / "generated_examples" / source.parent.name
                 result = self.run_cli("--source", source, "--list")
@@ -279,16 +282,16 @@ class cli_tests(unittest.TestCase):
                 arguments = [part for item in metadata if item["generate"]
                              for part in ("--config", item["section"])]
                 self.generate(source, *arguments)
-                expected_files = set((source.parent / "genconfig").rglob("*.json"))
+                expected_files = set(expected_dir.rglob("*.json"))
                 matched = set()
                 expected_outputs = set()
                 for item in metadata:
                     if not item["generate"]:
                         continue
                     output = f"{item['section']}/{item['gen_file']}"
-                    expected = source.parent / "genconfig" / output
+                    expected = expected_dir / output
                     if not expected.is_file():
-                        expected = source.parent / "genconfig" / item["gen_file"]
+                        expected = expected_dir / item["gen_file"]
                     self.assertEqual(self.read_output(output), json.loads(expected.read_text()))
                     matched.add(expected)
                     expected_outputs.add(output)

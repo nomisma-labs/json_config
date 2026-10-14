@@ -2,7 +2,7 @@
     {
         "jcfg": {
             "name": "dev",
-            "import": "config_example.json"
+            "import": "config_workflow_example.json"
         }
     },
     {

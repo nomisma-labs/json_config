@@ -136,7 +136,7 @@ and everything following it, and accepts `--config` once. It uses
 Boost.Program_options with exact long option names; `--config=FILE` and
 `--set=POINTER=value` are also accepted. The application checks
 `.options.check_config` to exit after successful loading, before starting services.
-See the [complete application example](../../apps/config_example/README.md).
+See the [complete application example](../../apps/config_workflow_example/README.md).
 
 The [application-argument example](../../apps/config_args_example/README.md) passes
 `.remaining_arguments` to its own Boost.Program_options parser before calling

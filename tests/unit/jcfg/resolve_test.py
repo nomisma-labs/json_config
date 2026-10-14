@@ -11,23 +11,27 @@ from unittest.mock import patch
 from tools.jcfg import config_error, generate_configs
 
 
-examples = Path(__file__).resolve().parents[3] / "docs/json_config/examples"
+repository = Path(__file__).resolve().parents[3]
+examples = repository / "docs/json_config/examples"
 
 
 class example_tests(unittest.TestCase):
     def test_all_documented_expected_outputs(self):
-        sources = sorted(source for source in examples.glob("*/*_jcfg.json")
+        sources = sorted((source, source.parent / "genconfig")
+                         for source in examples.glob("*/*_jcfg.json")
                          if (source.parent / "genconfig").is_dir())
+        sources.append((repository / "apps/md_capture/config/md_capture_jcfg.json",
+                        examples / "complete_config/genconfig"))
         self.assertEqual(len(sources), 10)
-        for source in sources:
+        for source, expected_dir in sources:
             with self.subTest(example=source.parent.name):
-                expected_files = set((source.parent / "genconfig").rglob("*.json"))
+                expected_files = set(expected_dir.rglob("*.json"))
                 actual_files = set()
                 for name, result in generate_configs(source, environment={}).items():
                     self.assertEqual(name, result.name)
-                    expected = source.parent / "genconfig" / name / result.gen_file
+                    expected = expected_dir / name / result.gen_file
                     if not expected.is_file():
-                        expected = source.parent / "genconfig" / result.gen_file
+                        expected = expected_dir / result.gen_file
                     self.assertTrue(expected.is_file(), str(expected))
                     self.assertEqual(result.config, json.loads(expected.read_text()))
                     actual_files.add(expected)

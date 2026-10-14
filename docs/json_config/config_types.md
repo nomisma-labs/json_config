@@ -99,7 +99,7 @@ The repository builds `core/json_config/config_types.cppm` with the ordinary `no
 Data-only applications link `nom::config_types` and import `nom.config_types`:
 
 ```cmake
-nom_app(config_example SOURCES main.cpp DEPS nom::config_types)
+nom_app(config_workflow_example SOURCES main.cpp DEPS nom::config_types)
 ```
 
 This target has no nlohmann/json dependency. JSON applications link `nom::json_config`,

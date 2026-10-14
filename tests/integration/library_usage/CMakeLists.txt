@@ -31,6 +31,22 @@ add_executable(use_library use_library_test.cxx)
 target_link_libraries(use_library PRIVATE nom::config_model nom::json_config)
 add_test(NAME use_library COMMAND use_library)
 
+# Generation is test tooling; the package consumer still links only installed targets.
+find_package(Python 3.10 REQUIRED COMPONENTS Interpreter)
+set(generated_config_dir "${CMAKE_CURRENT_BINARY_DIR}/genconfig")
+add_test(NAME generate_consumer_config
+    COMMAND ${Python_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/../../../tools/jcfggen.py"
+        --source "${CMAKE_CURRENT_SOURCE_DIR}/consumer_jcfg.json"
+        --output-dir "${generated_config_dir}")
+set_tests_properties(generate_consumer_config PROPERTIES FIXTURES_SETUP consumer_generated_config)
+add_test(NAME load_generated_config
+    COMMAND use_library --config "${generated_config_dir}/prod/consumer.json" --check-config)
+add_test(NAME reject_generated_config
+    COMMAND use_library --config "${generated_config_dir}/invalid/consumer.json"
+        --check-config --expect-validation-error)
+set_tests_properties(load_generated_config reject_generated_config PROPERTIES
+    FIXTURES_REQUIRED consumer_generated_config)
+
 foreach(test_case IN ITEMS integer_member integer_container unregistered_type)
     add_executable(reject_${test_case} EXCLUDE_FROM_ALL reject_config_type_test.cxx)
     target_link_libraries(reject_${test_case} PRIVATE nom::json_config)

@@ -1,0 +1,34 @@
+[
+    {
+        "jcfg": {
+            "name": "base",
+            "gen_file": "consumer.json",
+            "generate": false
+        },
+        "connection": {
+            "address": "wss://example.test/generated",
+            "timeout_s": 10
+        },
+        "enabled": true,
+        "annotation": "inherited"
+    },
+    {
+        "jcfg": {
+            "name": "prod",
+            "extend": "base"
+        },
+        "connection": {
+            "timeout_s": 30
+        },
+        "enabled": false
+    },
+    {
+        "jcfg": {
+            "name": "invalid",
+            "extend": "prod"
+        },
+        "connection": {
+            "timeout_s": 0
+        }
+    }
+]

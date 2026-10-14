@@ -60,7 +60,7 @@ For `{"address": "localhost"}`, this returns a config with a timeout of `5` and
 an empty optional. `nlohmann::json serialized = config;` converts it back to JSON.
 Place `NOM_JCONFIG` in the same namespace as the config type.
 
-The runnable [config_example](../../apps/config_example/README.md) combines
+The runnable [config_workflow_example](../../apps/config_workflow_example/README.md) combines
 `NOM_JCONFIG`, defaulted and optional members, and root validation with the loader.
 
 Nested config structures declare their own mappings. Supported config types

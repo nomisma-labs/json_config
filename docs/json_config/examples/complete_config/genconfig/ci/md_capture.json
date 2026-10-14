@@ -19,7 +19,7 @@
             "depth"
         ]
     },
-    "mdLog": {
+    "md_log": {
         "file": "md/%Y%m%d/binance-spot-%Y%m%d-%H.md"
     }
 }

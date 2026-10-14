@@ -19,7 +19,7 @@ dev:
     subscription
         symbols = btcusdt
         channels = trade, depth
-    mdLog.file = binance-spot-%Y%m%d-%H.md
+    md_log.file = binance-spot-%Y%m%d-%H.md
 
 prod:
     log
@@ -31,7 +31,7 @@ prod:
     subscription
         symbols = btcusdt, ethusdt
         channels = trade, depth
-    mdLog.file = md/%Y%m%d/binance-spot-%Y%m%d-%H.md
+    md_log.file = md/%Y%m%d/binance-spot-%Y%m%d-%H.md
 ```
 As you see even in this small config there are repeating and unique parameters and values. There are multiple ways how we can abstract them out. But first - why would we want to do it?
 Here are the cases:
@@ -41,7 +41,7 @@ Here are the cases:
 One possible way of defining a coherent config for this app and use cases is to:
 1. Create base config which would be also a dev config, e.g. `md_capture.json` with complete dev config;
 2. Create `md_capture_jcfg.json` which in `base` case imports `md_capture.json`;
-3. Add `ci` section for integration environment that inherits base config and imports `binance-spot-connection.json`. It also updates parameters `log` and `mdLog` to standard values for infra deployment;
+3. Add `ci` section for integration environment that inherits base config and imports `binance-spot-connection.json`. It also updates parameters `log` and `md_log` to standard values for infra deployment;
 4. Add `prod` section for main production deployment and inherit it from `ci`. Update `subscription.symbols` parameter - by including it from `binance-spot-md-capture-symbols.json`;
 5. Add `prod-liquidation` section to collect liquidation data, inherit it from `prod` and update `connection` and `subscription` parameter sections.
 
@@ -338,18 +338,22 @@ object are also resolved before that object is assigned.
 
 ### Complete example
 
-[md_capture_jcfg.json](examples/complete_config/md_capture_jcfg.json) brings the
+[md_capture_jcfg.json](../../apps/md_capture/config/md_capture_jcfg.json) brings the
 mechanisms together for the [motivating example](#motivating-example).
+The runnable [md_capture application](../../apps/md_capture/README.md) loads these
+configs into C++, validates them, and illustrates the resulting capture settings.
+The application and this guide share the inputs in its `config/` directory;
+the expected generated outputs remain linked below.
 
 The input files separate the responsibilities:
 
-- [md_capture.json](examples/complete_config/md_capture.json) contains a complete
+- [md_capture.json](../../apps/md_capture/config/md_capture.json) contains a complete
   development config with literal values. It can be used without generation.
-- [connection.json](examples/complete_config/connection.json) supplies the current
+- [connection.json](../../apps/md_capture/config/connection.json) supplies the current
   connection settings shared by deployed variants.
-- [deployment.json](examples/complete_config/deployment.json) supplies deployment
+- [deployment.json](../../apps/md_capture/config/deployment.json) supplies deployment
   logging settings and the market-data output path.
-- [symbols.json](examples/complete_config/symbols.json) supplies separate symbol
+- [symbols.json](../../apps/md_capture/config/symbols.json) supplies separate symbol
   lists for ordinary spot capture and liquidation capture.
 
 | Section | How it is assembled | Expected output |
@@ -362,7 +366,7 @@ The input files separate the responsibilities:
 For the liquidation exception, `connection` is overridden by importing the
 `/connection` fragment of the development config. This restores the old settings
 as one object. `subscription` is overridden with the liquidation symbol list and
-channel, while `log.file` is deleted and `mdLog.file` receives a separate capture
+channel, while `log.file` is deleted and `md_log.file` receives a separate capture
 path. The other variants retain their own resolved settings.
 
 

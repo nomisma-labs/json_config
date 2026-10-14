@@ -8,15 +8,19 @@ JSON app config framework has 4 components supporting various config related wor
 1. [C++ config loader and app config resolution](app_config_binding.md);
 1. [JSON/C++ mapping](json_cpp_mapping.md);
 
-[Implementation details using nlohmann/json](nlohmann_implementation.md).
-
-Runnable examples have their own build, usage, and test instructions:
-[config_example](../../apps/config_example/README.md) covers loading, mapping,
-and generated sections; [config_args_example](../../apps/config_args_example/README.md)
-adds application arguments through Boost.Program_options.
-
-[Config types and serialization dependencies](config_types_design.md) explains
-the separation between common C++ config data and JSON mapping. The
-[type guide](config_types.md) lists the types and their CMake integration.
-
 Implementation availability is tracked in the [repository status](../../README.md#implementation-status).
+
+## Implementation notes
+
+- [Config types](config_types.md) — supported types and their CMake integration.
+- [nlohmann/json implementation](nlohmann_implementation.md) — JSON mapping and conversion details.
+- [Config types and serialization dependencies](config_types_design.md) — separation of common C++ config data from JSON mapping.
+
+## Learning by example
+
+Each example includes its own build, usage, and test instructions.
+
+- [md_capture](../../apps/md_capture/README.md) — the comprehensive configuration from [jcfg.md](jcfg.md#complete-example).
+- [config_workflow_example](../../apps/config_workflow_example/README.md) — the full build, generation, loading, testing, packaging, and installation workflow.
+- [config_args_example](../../apps/config_args_example/README.md) — application arguments alongside config arguments, using Boost.Program_options.
+- [Consumer tests](../../tests/integration/library_usage/README.md) — using the library from source and as an installed C++ package.

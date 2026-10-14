@@ -4,6 +4,8 @@
 #include <json_config/config.h>
 
 #include <expected>
+#include <filesystem>
+#include <iostream>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -16,10 +18,59 @@ namespace consumer
 {
     NOM_JCONFIG(connection_config, address, timeout_s, interface_name)
     NOM_JCONFIG(app_config, connection, enabled, annotation)
+
+    int check_generated_config(int argc, char** argv)
+    {
+        const auto arguments = nom::jcfg::parse_config_arguments(argc, argv);
+        const bool expect_validation_error =
+            arguments.remaining_arguments == std::vector<std::string>{"--expect-validation-error"};
+        if (!arguments.options.check_config || !arguments.options.config_file ||
+            (!arguments.remaining_arguments.empty() && !expect_validation_error))
+        {
+            std::cerr << "Expected --config FILE --check-config [--expect-validation-error]\n";
+            return 1;
+        }
+
+        try
+        {
+            const auto loaded = nom::jcfg::load_config<app_config>(
+                arguments.options, [](std::string_view) -> std::optional<std::string> { return std::nullopt; });
+            if (expect_validation_error)
+            {
+                std::cerr << "Generated config unexpectedly passed validation\n";
+                return 1;
+            }
+            if (loaded.location.source != nom::jcfg::config_source::command_line ||
+                loaded.location.path != arguments.options.config_file ||
+                loaded.value.connection->address != "wss://example.test/generated" ||
+                *loaded.value.connection->timeout_s != 30 || loaded.value.connection->interface_name != "loopback" ||
+                loaded.value.enabled || loaded.value.annotation != "inherited")
+            {
+                std::cerr << "Generated config lost inherited values, child overrides or C++ defaults\n";
+                return 1;
+            }
+        }
+        catch (const nom::jcfg::config_error& error)
+        {
+            if (!expect_validation_error || error.stage != nom::jcfg::config_stage::validation ||
+                error.file != arguments.options.config_file ||
+                !std::string_view(error.what()).contains("connection requires an address and a positive timeout"))
+            {
+                std::cerr << error.what() << '\n';
+                return 1;
+            }
+        }
+        return 0;
+    }
 } // namespace consumer
 
-int main()
+int main(int argc, char** argv)
 {
+    if (argc > 1)
+    {
+        return consumer::check_generated_config(argc, argv);
+    }
+
     const nlohmann::json document{{"connection", {{"address", "wss://example.test/feed"}}}};
     const auto config = document.get<consumer::app_config>();
     const consumer::connection_config& connection = config.connection;

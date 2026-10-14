@@ -6,25 +6,47 @@ and versions follow [Semantic Versioning](https://semver.org); how to release:
 
 ## [Unreleased]
 
-- Separate format-independent types into this repository's `nom.config_types`
-  module. Its target is a transitive dependency of source and installed JSON
-  config consumers and is installed with the `json_config` package.
-- Replace `nom::jcfg::jint`, `juint`, `jdouble`, and `defaulted<T>` with
-  `nom::cfg_int`, `cfg_uint`, `cfg_double`, and `cfg_defaulted<T>`. Use
-  `nom::cfg_types` for convenience aliases, including strings, booleans,
-  containers, and optionals; custom type opt-in is now `nom::enable_config_type`.
-- Rename the JSON mapping macro from `NOM_CONFIG` to `NOM_JCONFIG`. JSON numeric
-  conversion checks and existing `null` behavior are retained. The `NOM_CONFIG`
-  environment variable and `NOM_CONFIG_KEY` application setting keep their names.
-- Sync the shared build infrastructure to `cmake_template` v0.9.0. Public build,
-  test, Python, and installation helpers enforce their project-local options;
-  library usage tests retain source coverage with installation disabled.
-- Make `nom_jcfg_generate()` respect `nom_build_apps` and `nom_jcfg_test()` require
-  both apps and tests. Simplify helper calls while retaining guards for direct
-  test registration and target/test property operations.
-- Initialize the application configuration project from `cmake_template`, retaining
-  its pinned nlohmann/json dependency and shared build infrastructure.
-- Sync the shared build infrastructure to `cmake_template` v0.8.2, including
-  `COMPILE_OPTIONS` support and git hooks; remove the unused Metal dependency.
-- Sync the shared build infrastructure to `cmake_template` v0.8.3 and find Boost's
-  program_options, filesystem and iostreams libraries with `nom_find_boost()`.
+The first complete application configuration workflow: define layered configs in
+**jcfg**, generate ordinary JSON, and load validated C++ configuration structures.
+
+The [jcfg language guide](docs/json_config/jcfg.md) establishes the specification
+through worked examples: single inheritance, recursive merging, whole-file and
+fragment imports, deletion, replacement, and generation-time variables. It also
+defines runtime variables and overrides. Companion guides document the four
+components that turn this model into an application workflow:
+
+- **[Python configuration generation](docs/json_config/config_generation.md).**
+  A reusable engine resolves selected sections in memory; `jcfggen.py` discovers
+  sources, lists section metadata, and publishes generated configs while preserving
+  unchanged output files. Both use Python 3.10+ and the standard library.
+- **[Build-system integration](docs/json_config/build_system_integration.md).**
+  Source configs are collected using the shared build kit. The library's CMake
+  helpers add opt-in generation, per-section application tests, and installation
+  of generated configs. Repository-wide `config` and `clean_config` targets prepare
+  or remove collected and generated configs; normal build cleanup covers them too.
+- **[C++ config location and loading](docs/json_config/app_config_binding.md).**
+  Applications select configs through command-line options, environment settings,
+  or executable-based lookup. Loading applies runtime variables and overrides,
+  maps to C++, and runs application validation. Configurations composed entirely
+  of defaulted or optional fields can initialize without a config file. The API reports
+  the selected source and contextual errors, supports `--check-config`, and leaves
+  application-specific arguments for the application's own parser.
+- **[JSON/C++ mapping](docs/json_config/json_cpp_mapping.md).**
+  `NOM_JCONFIG` uses nlohmann/json to map required, defaulted, optional, and nested
+  fields. Format-independent `nom::cfg_*` types live in `nom.config_types`, with
+  checked JSON numeric conversions supplied by the mapping layer. Application
+  structures own their validation and explicitly delegate to their children. The public
+  `nom.json_config` module and its common types are available to source consumers
+  and through an installed CMake package.
+
+Runnable examples connect the specification to application code:
+[md_capture](apps/md_capture/README.md) implements the guide's comprehensive
+configuration, [config_workflow_example](apps/config_workflow_example/README.md)
+covers the build, generation, loading, testing, and installation workflow, and
+[config_args_example](apps/config_args_example/README.md) combines config options
+with application arguments.
+
+Unit and integration tests cover the language, generator CLI, build lifecycle,
+mapping, locator, and loader. CTest exercises generation through application
+validation, including failure diagnostics and startup suppression, with separate
+consumer projects testing both source integration and installed-package usage.

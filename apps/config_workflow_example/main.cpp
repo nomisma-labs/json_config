@@ -41,7 +41,7 @@ int main(int argc, char** argv)
         const auto arguments = nom::jcfg::parse_config_arguments(argc, argv, NOM_CONFIG_KEY_VALUE);
         if (!arguments.remaining_arguments.empty())
         {
-            std::cerr << "Usage: config_example [--config FILE] [--set POINTER=value] [--check-config]\n";
+            std::cerr << "Usage: config_workflow_example [--config FILE] [--set POINTER=value] [--check-config]\n";
             return 1;
         }
         const auto loaded = nom::jcfg::load_config<example::app_config>(arguments.options);

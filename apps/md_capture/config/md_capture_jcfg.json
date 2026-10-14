@@ -47,7 +47,7 @@
                 ]
             }
         },
-        "mdLog": {
+        "md_log": {
             "file": "md/%Y%m%d/binance-liquidation-%Y%m%d-%H.md"
         }
     }

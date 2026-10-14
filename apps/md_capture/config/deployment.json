@@ -3,7 +3,7 @@
         "level": "warn",
         "file": "log/%Y%m%d/md_capture.log"
     },
-    "mdLog": {
+    "md_log": {
         "file": "md/%Y%m%d/binance-spot-%Y%m%d-%H.md"
     }
 }

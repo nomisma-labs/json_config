@@ -182,8 +182,11 @@ unless both `nom_build_tests` and `nom_build_apps` are ON, so helper calls need 
 outer condition. The section must be included in that app's generation selection.
 Test names are `<project>_<app>_config_<section>` and carry the `config` label.
 
-See [config_example](../../apps/config_example/README.md) for a complete app using
+See [config_workflow_example](../../apps/config_workflow_example/README.md) for a complete app using
 `nom_jcfg_generate()` and `nom_jcfg_test()` with `dev` and `prod` sections.
+Its CLI tests check startup and failure behavior; the
+[consumer tests](../../tests/integration/library_usage/README.md) generate and load
+configs using both source and installed C++ libraries.
 
 ## Cleaning build configs
 

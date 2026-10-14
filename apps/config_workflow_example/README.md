@@ -1,9 +1,14 @@
-# config_example
+# config_workflow_example
 
-This application demonstrates JSON/C++ mapping, config lookup and loading,
-validation, command-line overrides, and generated config tests. Startup remains
-in [main.cpp](main.cpp): parse config arguments, load and validate the config,
-then initialize the application or exit through `--check-config`.
+This application demonstrates the full configuration workflow: build and generate
+configs, load and map them to C++, validate startup, run CTest checks, and install
+the application and generated configs. The linked consumer tests also demonstrate
+using the library through its installed CMake package.
+
+Startup remains in [main.cpp](main.cpp): parse config arguments, load and validate
+the config, then initialize the application or exit through `--check-config`.
+See [md_capture](../md_capture/README.md) for a comprehensive config example that
+illustrates the jcfg language.
 
 ## Build
 
@@ -12,13 +17,13 @@ Run all commands in this README from the repository root. Follow the shared
 
 ```bash
 cmake --preset dev
-cmake --build --preset dev --target json_config_config_example
+cmake --build --preset dev --target json_config_config_workflow_example
 ```
 
-The executable is `build/dev/bin/config_example`. Its config directory is
-collected into `build/dev/config/config_example/`. The build also generates
-`build/dev/genconfig/dev/config_example.json` and
-`build/dev/genconfig/prod/config_example.json`.
+The executable is `build/dev/bin/config_workflow_example`. Its config directory is
+collected into `build/dev/config/config_workflow_example/`. The build also generates
+`build/dev/genconfig/dev/config_workflow_example.json` and
+`build/dev/genconfig/prod/config_workflow_example.json`.
 
 ## Config structure
 
@@ -37,7 +42,7 @@ re-exports their format-independent module. All fields are defaulted or
 optional, so loading an empty JSON object succeeds. If config lookup finds no
 file, these C++ defaults also support hard-wired initialization.
 
-The ordinary [config_example.json](config/config_example.json) supplies the three
+The ordinary [config_workflow_example.json](config/config_workflow_example.json) supplies the three
 defaulted values. The simulated application prints the timeout after initialization;
 `enabled` and `interface_name` illustrate mapping and are not used by its behavior.
 
@@ -46,7 +51,7 @@ defaulted values. The simulated application prints the timeout after initializat
 Select the collected default through a search directory:
 
 ```bash
-NOM_CONFIG_DIR=../config build/dev/bin/config_example
+NOM_CONFIG_DIR=../config build/dev/bin/config_workflow_example
 ```
 
 `NOM_CONFIG_DIR` entries are resolved against the executable directory, so
@@ -56,8 +61,8 @@ absolute path, then prints `Application initialized; timeout: 10 seconds`.
 Select a file explicitly and override its timeout:
 
 ```bash
-build/dev/bin/config_example \
-    --config build/dev/config/config_example/config_example.json \
+build/dev/bin/config_workflow_example \
+    --config build/dev/config/config_workflow_example/config_workflow_example.json \
     --set /timeout_s=20 --check-config
 ```
 
@@ -80,16 +85,16 @@ precedence, environment selection, runtime variables, and override rules.
 
 ## Generated sections and CMake tests
 
-The [jcfg source](config/config_example_jcfg.json) defines `dev`, which imports
+The [jcfg source](config/config_workflow_example_jcfg.json) defines `dev`, which imports
 the ordinary JSON file, and `prod`, which extends `dev` and changes `endpoint` to
 `https://example.test/production-feed` and `timeout_s` to `30`.
 
 [CMakeLists.txt](CMakeLists.txt) registers generation and generated-config tests:
 
 ```cmake
-nom_jcfg_generate(config_example SOURCE config_example_jcfg.json BUILD_WITH_APP)
-nom_jcfg_test(config_example dev)
-nom_jcfg_test(config_example prod)
+nom_jcfg_generate(config_workflow_example SOURCE config_workflow_example_jcfg.json BUILD_WITH_APP)
+nom_jcfg_test(config_workflow_example dev)
+nom_jcfg_test(config_workflow_example prod)
 ```
 
 The helpers check the project's options internally: generation requires
@@ -100,25 +105,49 @@ Omitting `SECTIONS` generates all enabled sections. `BUILD_WITH_APP` prepares th
 generated files whenever this app is built. Select a generated section explicitly:
 
 ```bash
-build/dev/bin/config_example --config build/dev/genconfig/prod/config_example.json
+build/dev/bin/config_workflow_example --config build/dev/genconfig/prod/config_workflow_example.json
 ```
 
 It reports the selected config and initializes with a timeout of 30 seconds.
 Generation can also be requested separately:
 
 ```bash
-cmake --build --preset dev --target json_config_generate_jcfg_config_example
+cmake --build --preset dev --target json_config_generate_jcfg_config_workflow_example
 ```
 
-When tests are enabled, run all three checks with:
+When tests are enabled, run the example's four CTest entries with:
 
 ```bash
-ctest --preset dev -R '^json_config_config_example_'
+ctest --preset dev -R '^json_config_config_workflow_example_'
 ```
 
 Two `nom_jcfg_test()` checks exercise the real loader, mapping, and validation for
 `dev` and `prod`. A separate integration test loads the collected ordinary JSON,
-applies `/timeout_s=20`, and uses `--check-config`. CTest expects these files and
-the executable to have been built first. See
-[build-system integration](../../docs/json_config/build_system_integration.md)
+applies `/timeout_s=20`, and uses `--check-config`. These tests expect the configs
+and executable to have been built first.
+
+The CLI suite generates this example's sections in a temporary directory and runs
+the real executable. It checks each section's timeout, config-key lookup through
+`NOM_CONFIG_DIR`, runtime overrides, and that `--check-config` exits before
+initialization. Mapping and validation errors must report their context and prevent
+startup. The [consumer tests](../../tests/integration/library_usage/README.md)
+also exercise generated configs through source and installed-package usage.
+
+See [build-system integration](../../docs/json_config/build_system_integration.md)
 for the helper API, aggregate config targets, cleanup, and installation.
+
+## Install and run
+
+With installation enabled, build all selected targets and generate configs before
+installing into a staging prefix:
+
+```bash
+cmake --build --preset dev
+cmake --build --preset dev --target config
+cmake --install build/dev --prefix "$PWD/build/dev/stage"
+NOM_CONFIG_DIR=../genconfig/prod build/dev/stage/bin/config_workflow_example --check-config
+```
+
+The installed executable selects `../genconfig/prod/config_workflow_example.json` relative to
+its own directory. Loading this generated JSON needs neither Python nor the jcfg
+source files. Use a fresh staging prefix to avoid files left by earlier installs.

@@ -44,14 +44,18 @@ The command-line adapter uses Boost.Program_options through the shared build kit
 
 Example applications have their own build, usage, and test instructions:
 
-- [config_example](apps/config_example/README.md) — config loading, mapping, and generated config tests.
+- [config_workflow_example](apps/config_workflow_example/README.md) — the full build, config, test, packaging, and installation workflow.
+- [md_capture](apps/md_capture/README.md) — the comprehensive configuration example from jcfg.md.
 - [config_args_example](apps/config_args_example/README.md) — application arguments alongside config arguments.
+
+The [consumer tests](tests/integration/library_usage/README.md) exercise generated
+configs through both source integration and the installed C++ package.
 
 Generate one config from the complete example:
 
 ```bash
 python3 tools/jcfggen.py \
-    --source docs/json_config/examples/complete_config/md_capture_jcfg.json \
+    --source apps/md_capture/config/md_capture_jcfg.json \
     --config prod --output-dir build/dev/genconfig
 ```
 
@@ -66,7 +70,7 @@ From the repository root, the engine can be used independently:
 from tools.jcfg import generate_configs
 
 configs = generate_configs(
-    "docs/json_config/examples/complete_config/md_capture_jcfg.json",
+    "apps/md_capture/config/md_capture_jcfg.json",
     sections=["prod"],
 )
 print(configs["prod"].gen_file)  # md_capture.json
