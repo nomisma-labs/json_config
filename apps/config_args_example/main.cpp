@@ -16,7 +16,7 @@ namespace example
 {
     struct app_config
     {
-        nom::jcfg::defaulted<std::string> greeting{"Hello"};
+        nom::cfg_defaulted<nom::cfg_string> greeting{"Hello"};
 
         std::expected<void, std::string> validate() const
         {
@@ -28,7 +28,7 @@ namespace example
         }
     };
 
-    NOM_CONFIG(app_config, greeting)
+    NOM_JCONFIG(app_config, greeting)
 } // namespace example
 
 int main(int argc, char** argv)

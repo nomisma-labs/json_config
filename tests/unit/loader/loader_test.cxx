@@ -22,18 +22,18 @@ import nom.json_config;
 namespace loader_fixture
 {
     using nlohmann::json;
-    using nom::jcfg::jint;
+    using namespace nom::cfg_types;
 
     struct override_config
     {
-        std::string name;
-        jint count;
-        bool enabled;
-        std::optional<jint> limit;
-        std::vector<jint> items;
+        cfg_string name;
+        cfg_int count;
+        cfg_bool enabled;
+        cfg_optional<cfg_int> limit;
+        cfg_vector<cfg_int> items;
     };
 
-    NOM_CONFIG(override_config, name, count, enabled, limit, items)
+    NOM_JCONFIG(override_config, name, count, enabled, limit, items)
 
     struct temporary_directory
     {
@@ -235,7 +235,7 @@ TEST_CASE("Overrides support escaped pointers array elements and the root", "[lo
     using loader_fixture::json;
     json document{{"a/b~c", json::array({1, 2})}};
     const mapping_probe array_probe = [](const json& candidate)
-    { static_cast<void>(candidate.at("a/b~c").get<std::vector<jint>>()); };
+    { static_cast<void>(candidate.at("a/b~c").get<nom::cfg_vector<nom::cfg_int>>()); };
     const std::vector<config_override> overrides{{"/a~1b~0c/1", "3"}};
     apply_config_overrides(document, overrides, array_probe);
     REQUIRE(document == json{{"a/b~c", {1, 3}}});

@@ -13,7 +13,6 @@
 #include <optional>
 #include <stdexcept>
 #include <string>
-#include <type_traits>
 #include <vector>
 
 import nom.json_config;
@@ -21,36 +20,36 @@ import nom.json_config;
 namespace mapping_fixture
 {
     using nlohmann::json;
-    using namespace nom::jcfg::types;
+    using namespace nom::cfg_types;
 
     struct empty_config
     {
     };
 
-    NOM_CONFIG(empty_config)
+    NOM_JCONFIG(empty_config)
 
     struct endpoint
     {
-        std::string address{"localhost"};
-        defaulted<jint> timeout_s{5};
-        std::optional<std::string> interface_name;
+        cfg_string address{"localhost"};
+        cfg_defaulted<cfg_int> timeout_s{5};
+        cfg_optional<cfg_string> interface_name;
     };
 
-    NOM_CONFIG(endpoint, address, timeout_s, interface_name)
+    NOM_JCONFIG(endpoint, address, timeout_s, interface_name)
 
     struct app_config
     {
-        jint workers{1};
-        defaulted<endpoint> connection{endpoint{"parent", {42}, "eth0"}};
-        std::optional<endpoint> standby{endpoint{"backup", {43}, "eth1"}};
-        std::optional<std::string> note;
+        cfg_int workers{1};
+        cfg_defaulted<endpoint> connection{endpoint{"parent", {42}, "eth0"}};
+        cfg_optional<endpoint> standby{endpoint{"backup", {43}, "eth1"}};
+        cfg_optional<cfg_string> note;
     };
 
-    NOM_CONFIG(app_config, workers, connection, standby, note)
+    NOM_JCONFIG(app_config, workers, connection, standby, note)
 
     struct port_config
     {
-        jint port;
+        cfg_int port;
 
         std::expected<void, std::string> validate() const
         {
@@ -62,17 +61,17 @@ namespace mapping_fixture
         }
     };
 
-    NOM_CONFIG(port_config, port)
+    NOM_JCONFIG(port_config, port)
 
     struct numeric_config
     {
-        juint count;
-        jdouble rate;
-        bool active;
-        std::optional<jint> limit;
+        cfg_uint count;
+        cfg_double rate;
+        cfg_bool active;
+        cfg_optional<cfg_int> limit;
     };
 
-    NOM_CONFIG(numeric_config, count, rate, active, limit)
+    NOM_JCONFIG(numeric_config, count, rate, active, limit)
 
     struct delay
     {
@@ -81,7 +80,7 @@ namespace mapping_fixture
 
     template <typename Json> void from_json(const Json& document, delay& value)
     {
-        value.value = std::chrono::milliseconds{document.template get<jint>().get()};
+        value.value = std::chrono::milliseconds{document.template get<cfg_int>().get()};
     }
 
     template <typename Json> void to_json(Json& document, const delay& value)
@@ -91,7 +90,7 @@ namespace mapping_fixture
 
     struct renamed_config
     {
-        jint connection_limit;
+        cfg_int connection_limit;
     };
 
     void from_json(const json& document, renamed_config& value)
@@ -106,8 +105,8 @@ namespace mapping_fixture
 
 } // namespace mapping_fixture
 
-template <> inline constexpr bool nom::jcfg::enable_config_type<mapping_fixture::delay> = true;
-template <> inline constexpr bool nom::jcfg::enable_config_type<mapping_fixture::renamed_config> = true;
+template <> inline constexpr bool nom::enable_config_type<mapping_fixture::delay> = true;
+template <> inline constexpr bool nom::enable_config_type<mapping_fixture::renamed_config> = true;
 
 namespace mapping_fixture
 {
@@ -117,108 +116,42 @@ namespace mapping_fixture
         renamed_config limits;
     };
 
-    NOM_CONFIG(adapted_config, timeout, limits)
+    NOM_JCONFIG(adapted_config, timeout, limits)
 
     struct container_config
     {
-        std::vector<endpoint> endpoints;
-        std::map<std::string, defaulted<jint>> quantities;
-        std::vector<defaulted<jint>> priorities;
-        std::optional<std::vector<jint>> ports;
+        cfg_vector<endpoint> endpoints;
+        cfg_map<cfg_defaulted<cfg_int>> quantities;
+        cfg_vector<cfg_defaulted<cfg_int>> priorities;
+        cfg_optional<cfg_vector<cfg_int>> ports;
     };
 
-    NOM_CONFIG(container_config, endpoints, quantities, priorities, ports)
+    NOM_JCONFIG(container_config, endpoints, quantities, priorities, ports)
 
 } // namespace mapping_fixture
 
-TEST_CASE("config numbers convert to their underlying types in ordinary expressions", "[mapping]")
+TEST_CASE("defaulted scalars use native JSON conversion and retain null defaults", "[mapping]")
 {
-    using nom::jcfg::jdouble;
-    using nom::jcfg::jint;
-    using nom::jcfg::juint;
-
-    static_assert(std::is_same_v<jint, nom::jcfg::types::jint>);
-    static_assert(std::is_same_v<juint, nom::jcfg::types::juint>);
-    static_assert(std::is_same_v<jdouble, nom::jcfg::types::jdouble>);
-
-    constexpr jint signed_value{-7};
-    constexpr juint unsigned_value{9};
-    constexpr jdouble real_value{1.5};
-    constexpr std::int64_t signed_number = signed_value;
-    constexpr std::uint64_t unsigned_number = unsigned_value;
-    constexpr double real_number = real_value;
-    static_assert(signed_number == -7 && unsigned_number == 9 && real_number == 1.5);
-    static_assert(std::is_nothrow_convertible_v<const jint&, std::int64_t>);
-    static_assert(std::is_nothrow_convertible_v<const juint&, std::uint64_t>);
-    static_assert(std::is_nothrow_convertible_v<const jdouble&, double>);
-
-    const auto twice = [](std::int64_t value) { return value * 2; };
-    REQUIRE(twice(signed_value) == -14);
-    REQUIRE(signed_value < 0);
-    REQUIRE(unsigned_value + std::uint64_t{1} == 10);
-    REQUIRE(real_value * 2.0 == 3.0);
-}
-
-TEST_CASE("defaulted provides reference conversions and direct access without copying", "[mapping]")
-{
-    using nom::jcfg::defaulted;
-    using nom::jcfg::jint;
-
-    static_assert(std::is_same_v<defaulted<jint>, nom::jcfg::types::defaulted<nom::jcfg::types::jint>>);
-    static_assert(std::is_aggregate_v<defaulted<jint>>);
-    static_assert(std::is_nothrow_convertible_v<defaulted<jint>&, jint&>);
-    static_assert(std::is_nothrow_convertible_v<const defaulted<jint>&, const jint&>);
-    static_assert(!std::is_convertible_v<const defaulted<jint>&, jint&>);
-
-    constexpr defaulted<jint> initial{42};
-    static_assert(static_cast<const jint&>(initial).value == 42);
-    static_assert(initial->value == 42);
-    static_assert(*initial == 42);
-
-    defaulted<jint> value{42};
-    jint& reference = value;
-    REQUIRE(&reference == &value.value);
-    REQUIRE(value.value.get() == 42);
-    reference.value = 7;
-    REQUIRE(value.get().get() == 7);
-    value->value = 8;
-    REQUIRE((*value).value == 8);
-    (*value).value = 9;
-    REQUIRE(value->value == 9);
-
-    const defaulted<jint>& constant = value;
-    const jint& constant_reference = constant;
-    static_assert(std::is_same_v<decltype(*value), jint&>);
-    static_assert(std::is_same_v<decltype(*constant), const jint&>);
-    static_assert(std::is_same_v<decltype(value.operator->()), jint*>);
-    static_assert(std::is_same_v<decltype(constant.operator->()), const jint*>);
-    static_assert(noexcept(*value) && noexcept(*constant));
-    static_assert(noexcept(value.operator->()) && noexcept(constant.operator->()));
-    REQUIRE(&constant_reference == &value.value);
-    REQUIRE(&*value == &value.value);
-    REQUIRE(&*constant == &value.value);
-    REQUIRE(value.operator->() == &value.value);
-    REQUIRE(constant.operator->() == &value.value);
-    REQUIRE(constant.get().get() == 9);
-
-    const std::int64_t number = *constant;
-    REQUIRE(number == 9);
-
+    nom::cfg_defaulted<nom::cfg_int> value{42};
     nlohmann::json(10).get_to(value);
     REQUIRE(*value == 10);
     const nlohmann::json serialized = value;
     REQUIRE(serialized == 10);
+
+    nlohmann::json(nullptr).get_to(value);
+    REQUIRE(*value == 10);
+    REQUIRE_THROWS_AS(nlohmann::json(1.5).get_to(value), nlohmann::json::type_error);
 }
 
 TEST_CASE("defaulted exposes nested members through arrow and reference access", "[mapping]")
 {
-    nom::jcfg::types::defaulted<mapping_fixture::endpoint> connection;
+    nom::cfg_types::cfg_defaulted<mapping_fixture::endpoint> connection;
     connection->address = "primary";
     connection->timeout_s->value = 30;
     mapping_fixture::endpoint& endpoint = connection;
     endpoint.interface_name = "eth0";
 
-    const nom::jcfg::types::defaulted<mapping_fixture::endpoint>& constant = connection;
+    const nom::cfg_types::cfg_defaulted<mapping_fixture::endpoint>& constant = connection;
     const mapping_fixture::endpoint& constant_endpoint = constant;
     REQUIRE(&endpoint == &connection.value);
     REQUIRE(&constant_endpoint == &connection.value);
@@ -447,52 +380,52 @@ TEST_CASE("native ADL supports generic and concrete converters", "[mapping]")
 TEST_CASE("signed config integers enforce JSON type and representable range", "[mapping]")
 {
     using nlohmann::json;
-    using nom::jcfg::types::jint;
+    using nom::cfg_types::cfg_int;
 
     for (const std::int64_t number :
          {std::numeric_limits<std::int64_t>::min(), std::int64_t{0}, std::numeric_limits<std::int64_t>::max()})
     {
         const json document = number;
-        const auto value = document.get<jint>();
+        const auto value = document.get<cfg_int>();
         REQUIRE(value.get() == number);
         const json encoded = value;
         REQUIRE(encoded == document);
     }
     for (const auto& document : {json(1.5), json(1.0), json("1"), json(true), json(nullptr)})
     {
-        REQUIRE_THROWS_AS(document.get<jint>(), json::type_error);
+        REQUIRE_THROWS_AS(document.get<cfg_int>(), json::type_error);
     }
     const json maximum_unsigned = static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max());
-    REQUIRE(maximum_unsigned.get<jint>().get() == std::numeric_limits<std::int64_t>::max());
+    REQUIRE(maximum_unsigned.get<cfg_int>().get() == std::numeric_limits<std::int64_t>::max());
     const json overflow = std::numeric_limits<std::uint64_t>::max();
-    REQUIRE_THROWS_AS(overflow.get<jint>(), json::out_of_range);
+    REQUIRE_THROWS_AS(overflow.get<cfg_int>(), json::out_of_range);
 }
 
 TEST_CASE("unsigned config integers reject negative and noninteger values", "[mapping]")
 {
     using nlohmann::json;
-    using nom::jcfg::types::juint;
+    using nom::cfg_types::cfg_uint;
 
     for (const auto& document : {json(std::int64_t{0}),
                                  json(std::uint64_t{0}),
                                  json(std::uint64_t{42}),
                                  json(std::numeric_limits<std::uint64_t>::max())})
     {
-        const auto value = document.get<juint>();
+        const auto value = document.get<cfg_uint>();
         const json encoded = value;
         REQUIRE(encoded == document);
     }
-    REQUIRE_THROWS_AS(json(-1).get<juint>(), json::out_of_range);
+    REQUIRE_THROWS_AS(json(-1).get<cfg_uint>(), json::out_of_range);
     for (const auto& document : {json(1.5), json(1.0), json("1"), json(true), json(nullptr)})
     {
-        REQUIRE_THROWS_AS(document.get<juint>(), json::type_error);
+        REQUIRE_THROWS_AS(document.get<cfg_uint>(), json::type_error);
     }
 }
 
 TEST_CASE("floating config numbers support finite numbers and reject nonfinite values", "[mapping]")
 {
     using nlohmann::json;
-    using nom::jcfg::types::jdouble;
+    using nom::cfg_types::cfg_double;
 
     for (const auto& document : {json(-1),
                                  json(std::uint64_t{1}),
@@ -500,21 +433,21 @@ TEST_CASE("floating config numbers support finite numbers and reject nonfinite v
                                  json(std::numeric_limits<double>::max()),
                                  json(std::numeric_limits<double>::lowest())})
     {
-        const auto value = document.get<jdouble>();
+        const auto value = document.get<cfg_double>();
         REQUIRE(value.get() == document.get<double>());
         const json encoded = value;
         REQUIRE(encoded == document);
     }
     for (const auto& document : {json("1.5"), json(true), json(nullptr)})
     {
-        REQUIRE_THROWS_AS(document.get<jdouble>(), json::type_error);
+        REQUIRE_THROWS_AS(document.get<cfg_double>(), json::type_error);
     }
     for (const double number : {std::numeric_limits<double>::infinity(),
                                 -std::numeric_limits<double>::infinity(),
                                 std::numeric_limits<double>::quiet_NaN()})
     {
-        REQUIRE_THROWS_AS(json(number).get<jdouble>(), json::out_of_range);
-        const jdouble value{number};
+        REQUIRE_THROWS_AS(json(number).get<cfg_double>(), json::out_of_range);
+        const cfg_double value{number};
         REQUIRE_THROWS_AS(json(value), json::out_of_range);
     }
 }

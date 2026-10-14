@@ -37,7 +37,7 @@ namespace rejected_fixture
 #endif
     };
 
-    NOM_CONFIG(config, value)
+    NOM_JCONFIG(config, value)
 } // namespace rejected_fixture
 
 int main()

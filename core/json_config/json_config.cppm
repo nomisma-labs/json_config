@@ -15,7 +15,8 @@ module;
 
 export module nom.json_config;
 
-export import :types;
+export import nom.config_types;
+export import :mapping;
 export import :runtime;
 
 export namespace nom::jcfg
@@ -39,7 +40,7 @@ export namespace nom::jcfg
             }
         }
 
-        // NOM_CONFIG supplies nlohmann::json; these helpers only handle presence.
+        // NOM_JCONFIG supplies nlohmann::json; these helpers only handle presence.
         template <typename Json, typename Value>
         void read_member(const Json& document, const char* name, Value& destination)
         {
@@ -47,7 +48,7 @@ export namespace nom::jcfg
         }
 
         template <typename Json, typename Value>
-        void read_member(const Json& document, const char* name, defaulted<Value>& destination)
+        void read_member(const Json& document, const char* name, cfg_defaulted<Value>& destination)
         {
             if (const auto found = document.find(name); found != document.end())
             {

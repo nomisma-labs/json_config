@@ -1,8 +1,8 @@
 # Config types and serialization dependencies
 
-This note explains the current design and a possible future separation.
-The separation is deferred; the implementation described in
-[JSON/C++ mapping](json_cpp_mapping.md) remains in place.
+This repository owns the format-independent `nom.config_types` module, separately
+from JSON mapping, checked conversions, and presence handling. Moving the common
+module to a future `nom_core` repository is deferred; no such dependency exists now.
 
 ## Why special config types were introduced
 
@@ -12,48 +12,48 @@ mapping and cannot detect that the fractional part was discarded. Its
 [conditional number conversion guidance](https://json.nlohmann.me/features/types/number_handling/#number-conversion)
 recommends checking the stored type and destination range before conversion.
 
-`jint`, `juint`, and `jdouble` give us types whose normal `from_json`
+`nom::cfg_int`, `cfg_uint`, and `cfg_double` give us types whose JSON
 converters can perform these checks and then delegate to nlohmann. This also works
 inside native containers, without a separate serializer or container traversal.
-`NOM_CONFIG` restricts mapped members to config-enabled types so ordinary numeric
+`NOM_JCONFIG` restricts mapped members to config-enabled types so ordinary numeric
 members cannot accidentally bypass the checks. The supported types and their
 exact conversion rules are listed in the
 [implementation notes](nlohmann_implementation.md#config-enabled-types).
 
 These checks apply at the serialization boundary. The types still expose mutable
 C++ values; application validation handles domain rules. Separately,
-`defaulted<T>` and optional members express presence policies.
+`cfg_defaulted<T>` and `cfg_optional<T>` express presence policies.
 
-## Why C++ config now depends on JSON
+## Common types and format adapters
 
-The numeric and default types belong to `nom::jcfg`, with convenience aliases in
-`nom::jcfg::types`. They are exported by `nom.json_config` together with their JSON
-converters. Although the converters take a template parameter named `Json`, they
-call JSON-specific operations and create JSON exceptions. Application structures
-using these types therefore depend on the JSON config library.
+The [common module](config_types.md) defines numeric wrappers, standard
+string, boolean and container aliases, presence wrappers, and config-type
+eligibility. Types live in `nom`, with convenience aliases in `nom::cfg_types`.
+The module depends only on the standard library; applications can construct and
+validate their config data without a serialization library.
 
-There is also a binding dependency: `<json_config/config.h>` includes nlohmann,
-and `NOM_CONFIG` generates functions accepting `nlohmann::json`. It combines
-config-type enablement with JSON binding. Using it in the same file as a config
-structure introduces JSON support into that file.
+`nom.json_config` re-exports the common module and supplies the JSON adapter.
+Source and installed consumers obtain `nom::config_types` transitively through
+`nom::json_config`. Numeric source checks, JSON exceptions, and `null` handling
+remain in the adapter; the common wrappers do not validate assignments.
 
-This coupling comes from where the types and converters are defined. The numeric
-and presence policies themselves can be independent of a serialization format.
+The binding itself remains format-specific: `<json_config/config.h>` includes
+nlohmann, and `NOM_JCONFIG` generates functions accepting `nlohmann::json`.
+It also enables the structure and checks its mapped members against the common
+type rules. Custom types can opt in through `nom::enable_config_type<T>` and
+provide their own converters.
 
-## Possible separation
+## Keeping application data independent
 
-A future change could put value types, presence policies, and config-type
-enablement in a small format-neutral module. JSON converters, JSON-specific
-checks, exceptions, and `null` handling would remain in a separate JSON adapter
-that uses nlohmann directly.
+Define data structures using `import nom.config_types;` and attach JSON mappings
+in a separate binding file if those structures need to remain independent of
+JSON. Using `NOM_JCONFIG` beside a structure is convenient, but that file then
+depends on the JSON library.
 
-Applications would define their config structures using the neutral types and
-attach JSON mappings in a separate binding file. A future TOML adapter could
-reuse the same structures with its own supported representations. The common
-types would have no dependency on either adapter.
+A future TOML adapter can reuse the same common types with its own conversion
+rules. This does not promise that every stored value has an equivalent
+representation in both formats; for example, the full unsigned 64-bit range
+exceeds the range of a TOML adapter using signed 64-bit integers.
 
-This also requires separating the responsibilities currently combined by
-`NOM_CONFIG`; changing names alone would not remove the dependency. Sharing one
-member declaration between formats would require neutral field metadata and is
-a separate design decision. No generic serialization framework is required for
-the proposed separation.
+The common module supplies no field reflection or serialization framework.
+Sharing member declarations between format mappings remains a separate decision.

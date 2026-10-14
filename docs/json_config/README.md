@@ -16,6 +16,7 @@ and generated sections; [config_args_example](../../apps/config_args_example/REA
 adds application arguments through Boost.Program_options.
 
 [Config types and serialization dependencies](config_types_design.md) explains
-the current coupling and a possible future separation, which is deferred.
+the separation between common C++ config data and JSON mapping. The
+[type guide](config_types.md) lists the types and their CMake integration.
 
 Implementation availability is tracked in the [repository status](../../README.md#implementation-status).

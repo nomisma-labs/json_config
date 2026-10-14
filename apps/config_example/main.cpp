@@ -12,14 +12,14 @@ import nom.json_config;
 
 namespace example
 {
-    using namespace nom::jcfg::types;
+    using namespace nom::cfg_types;
 
     struct app_config
     {
-        defaulted<std::string> endpoint{"https://example.test/feed"};
-        defaulted<jint> timeout_s{10};
-        defaulted<bool> enabled{true};
-        std::optional<std::string> interface_name;
+        cfg_defaulted<cfg_string> endpoint{"https://example.test/feed"};
+        cfg_defaulted<cfg_int> timeout_s{10};
+        cfg_defaulted<cfg_bool> enabled{true};
+        cfg_optional<cfg_string> interface_name;
 
         std::expected<void, std::string> validate() const
         {
@@ -31,7 +31,7 @@ namespace example
         }
     };
 
-    NOM_CONFIG(app_config, endpoint, timeout_s, enabled, interface_name)
+    NOM_JCONFIG(app_config, endpoint, timeout_s, enabled, interface_name)
 } // namespace example
 
 int main(int argc, char** argv)

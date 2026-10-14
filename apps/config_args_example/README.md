@@ -24,7 +24,7 @@ uses an ordinary JSON file and does not register jcfg generation.
 ## Config and application arguments
 
 The C++ config has one field, `greeting`, of type
-`nom::jcfg::defaulted<std::string>`, with a default of `Hello`. `NOM_CONFIG` maps
+`nom::cfg_defaulted<nom::cfg_string>`, with a default of `Hello`. `NOM_JCONFIG` maps
 it to JSON, and root `validate()` requires it to be nonempty. The collected JSON
 also contains `"greeting": "Hello"`. If lookup finds no config file, the C++
 default permits hard-wired initialization.

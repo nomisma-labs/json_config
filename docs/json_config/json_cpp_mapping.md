@@ -7,11 +7,12 @@ the C++ types; the loader and generator do not need to know individual config me
 
 ## Declaring a config
 
-Import `nom.json_config` for the config types in `nom::jcfg`. The
-`nom::jcfg::types` namespace provides aliases for a convenient scoped using-directive.
-Include `<json_config/config.h>` for `NOM_CONFIG` and the nlohmann/json dependency.
+Import `nom.json_config` for JSON mapping and the common config types in `nom`.
+It re-exports `nom.config_types`; data-only code can import that module directly.
+The `nom::cfg_types` namespace provides aliases for a convenient scoped using-directive.
+Include `<json_config/config.h>` for `NOM_JCONFIG` and the nlohmann/json dependency.
 
-The Nomisma macro `NOM_CONFIG` declares which members participate in JSON/C++
+The Nomisma macro `NOM_JCONFIG` declares which members participate in JSON/C++
 mapping and checks that their types are enabled for config use. By default, JSON
 keys have the same names as the C++ members:
 
@@ -27,13 +28,13 @@ import nom.json_config;
 
 namespace demo
 {
-    using namespace nom::jcfg::types;
+    using namespace nom::cfg_types;
 
     struct connection_config
     {
-        std::string address;
-        defaulted<jint> timeout_s{5};
-        std::optional<std::string> interface_name;
+        cfg_string address;
+        cfg_defaulted<cfg_int> timeout_s{5};
+        cfg_optional<cfg_string> interface_name;
 
         std::expected<void, std::string> validate() const
         {
@@ -43,7 +44,7 @@ namespace demo
         }
     };
 
-    NOM_CONFIG(connection_config, address, timeout_s, interface_name)
+    NOM_JCONFIG(connection_config, address, timeout_s, interface_name)
 
     connection_config make_connection(const nlohmann::json& document)
     {
@@ -57,18 +58,21 @@ namespace demo
 
 For `{"address": "localhost"}`, this returns a config with a timeout of `5` and
 an empty optional. `nlohmann::json serialized = config;` converts it back to JSON.
-Place `NOM_CONFIG` in the same namespace as the config type.
+Place `NOM_JCONFIG` in the same namespace as the config type.
 
 The runnable [config_example](../../apps/config_example/README.md) combines
-`NOM_CONFIG`, defaulted and optional members, and root validation with the loader.
+`NOM_JCONFIG`, defaulted and optional members, and root validation with the loader.
 
 Nested config structures declare their own mappings. Supported config types
 include booleans, strings, checked numeric types, nested configs, vectors, and
 string-keyed maps. Plain numeric members such as `int` and `double` are rejected
-at compile time; use `jint`, `juint`, or `jdouble` from `nom::jcfg::types`.
+at compile time; use `cfg_int`, `cfg_uint`, or `cfg_double` from `nom::cfg_types`.
 
 Serialization and deserialization use nlohmann/json directly. Custom domain
 types can be explicitly enabled and supply normal `from_json`/`to_json` converters.
+The [type guide](config_types.md) describes the format-independent
+types, aliases, and CMake target. Linking `nom::json_config` supplies that target
+transitively, including when consuming an installed package.
 
 Use `document.get<Config>()` to create a config, or `document.get_to(candidate)`
 to populate an existing candidate whose initial values should be preserved.
@@ -95,8 +99,8 @@ optional wrappers, the treatment of `null`, and conversion details.
 ## Validation boundaries
 
 Mapping checks object structure and required keys, then uses each type's
-nlohmann/json converter. Checked numeric types validate the source before
-conversion: for example, `jint` rejects fractional JSON numbers rather than
+nlohmann/json converter. Numeric adapters validate the source before conversion:
+for example, the JSON adapter for `cfg_int` rejects fractional numbers rather than
 truncating them. Application validation checks domain-specific values, ranges,
 and relationships between fields.
 

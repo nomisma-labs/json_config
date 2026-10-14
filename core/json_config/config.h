@@ -16,16 +16,16 @@
 #endif
 
 #define NOM_JCFG_READ_MEMBER(member)                                                                                   \
-    static_assert(::nom::jcfg::detail::is_config_member<std::remove_cvref_t<decltype(nom_jcfg_destination.member)>>,   \
-                  "NOM_CONFIG member type is not config-enabled");                                                     \
+    static_assert(::nom::is_config_member<std::remove_cvref_t<decltype(nom_jcfg_destination.member)>>,                 \
+                  "NOM_JCONFIG member type is not config-enabled");                                                    \
     ::nom::jcfg::detail::read_member(nom_jcfg_document, #member, nom_jcfg_destination.member);
 #define NOM_JCFG_WRITE_MEMBER(member)                                                                                  \
-    static_assert(::nom::jcfg::detail::is_config_member<std::remove_cvref_t<decltype(nom_jcfg_source.member)>>,        \
-                  "NOM_CONFIG member type is not config-enabled");                                                     \
+    static_assert(::nom::is_config_member<std::remove_cvref_t<decltype(nom_jcfg_source.member)>>,                      \
+                  "NOM_JCONFIG member type is not config-enabled");                                                    \
     nom_jcfg_document[#member] = nom_jcfg_source.member;
 
 // Declare beside the type, in its namespace, after importing nom.json_config.
-#define NOM_CONFIG(Type, ...)                                                                                          \
+#define NOM_JCONFIG(Type, ...)                                                                                         \
     inline std::true_type nom_config_type(Type*)                                                                       \
     {                                                                                                                  \
         return {};                                                                                                     \

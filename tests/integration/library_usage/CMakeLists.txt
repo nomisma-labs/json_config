@@ -4,6 +4,8 @@
 cmake_minimum_required(VERSION 3.30)
 project(json_config_library_usage LANGUAGES CXX)
 
+include("${CMAKE_CURRENT_SOURCE_DIR}/../../../cmake/kit/nom_kit.cmake")
+
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -20,8 +22,13 @@ endif()
 
 enable_testing()
 
+# The model compiles with common types alone; its JSON binding belongs to the consumer.
+nom_lib(config_model STATIC MODULES config_model.cppm
+    BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}"
+    PUBLIC_DEPS nom::config_types)
+
 add_executable(use_library use_library_test.cxx)
-target_link_libraries(use_library PRIVATE nom::json_config)
+target_link_libraries(use_library PRIVATE nom::config_model nom::json_config)
 add_test(NAME use_library COMMAND use_library)
 
 foreach(test_case IN ITEMS integer_member integer_container unregistered_type)

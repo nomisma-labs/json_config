@@ -9,8 +9,9 @@ by `config.h`. It scopes a GCC 16 release-build `-Warray-bounds` workaround to
 nlohmann's diagnostic parent tracking; application warnings remain enabled.
 
 The [config types design note](config_types_design.md) explains why the special
-types were introduced, their current dependency on JSON, and a possible future
-separation. That separation is deferred.
+types were introduced and how common C++ data is separated from JSON mapping.
+This repository's `nom.config_types` module owns the types; `nom.json_config`
+supplies their JSON converters and re-exports the common module.
 
 ## Overview of nlohmann/json facilities
 
@@ -28,12 +29,12 @@ import nom.json_config;
 
 namespace demo
 {
-    using namespace nom::jcfg::types;
+    using namespace nom::cfg_types;
 
     struct connection_config
     {
-        std::string address;
-        jint timeout_s;
+        cfg_string address;
+        cfg_int timeout_s;
     };
 
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(connection_config, address, timeout_s)
@@ -49,7 +50,7 @@ nlohmann::json serialized = config;
 
 Use `config.timeout_s` directly in numeric expressions or when passing it to a
 function accepting its underlying integer type. The native macro invokes
-`jint`'s JSON converter, so a floating-point JSON value for `timeout_s`
+`cfg_int`'s JSON converter, so a floating-point JSON value for `timeout_s`
 still fails conversion.
 
 | nlohmann/json facility | Behavior relevant to config mapping |
@@ -59,30 +60,31 @@ still fails conversion.
 | `get<T>()` | Creates a new value and invokes its converter. |
 | `get_to(existing)` | Passes an existing value to its converter. Preserving its defaults still depends on that converter. |
 
-Use `NOM_CONFIG` for application config structures. It enables the structure as
+Use `NOM_JCONFIG` for application config structures. It enables the structure as
 a config type, enforces config-enabled member types, adds the per-member presence
 policies below, and delegates value conversion to nlohmann/json.
 
 ## Config-enabled types
 
-Only enabled types may appear in a `NOM_CONFIG` mapping. The check applies
+Only enabled types may appear in a `NOM_JCONFIG` mapping. The check applies
 recursively to wrappers and container elements.
 
 | Type | Supported representation |
 |---|---|
-| `bool` | JSON boolean |
-| `std::string` | JSON string |
-| `nom::jcfg::jint` | JSON integer in the `std::int64_t` range |
-| `nom::jcfg::juint` | Nonnegative JSON integer in the `std::uint64_t` range |
-| `nom::jcfg::jdouble` | JSON number that converts to a finite `double` |
-| A structure declared with `NOM_CONFIG` | JSON object; the macro enables the structure automatically |
-| `std::vector<T>` | JSON array of enabled values |
-| `std::map<std::string, T>` or `std::unordered_map<std::string, T>` | JSON object with enabled mapped values |
+| `nom::cfg_bool` (`bool`) | JSON boolean |
+| `nom::cfg_string` (`std::string`) | JSON string |
+| `nom::cfg_int` | JSON integer in the `std::int64_t` range |
+| `nom::cfg_uint` | Nonnegative JSON integer in the `std::uint64_t` range |
+| `nom::cfg_double` | JSON number that converts to a finite `double` |
+| A structure declared with `NOM_JCONFIG` | JSON object; the macro enables the structure automatically |
+| `nom::cfg_vector<T>` (`std::vector<T>`) | JSON array of enabled values |
+| `nom::cfg_map<T>` or `nom::cfg_unordered_map<T>` | JSON object with enabled mapped values |
 
-The numeric types and `defaulted<T>` also have aliases in `nom::jcfg::types`;
-both spellings name the same types.
+All common types have aliases in `nom::cfg_types`; both spellings name the same
+types. Standard-library aliases remain usable under their original names. The
+[type guide](config_types.md) lists their definitions.
 
-`defaulted<T>` and optional members apply the presence policies described
+`cfg_defaulted<T>` and optional members apply the presence policies described
 below. Plain numeric types such as `int`, `unsigned`, and `double` are not enabled.
 The numeric config types are aggregates with a public `value` member and mutable
 and const `get()` accessors. They implicitly convert by value to their underlying
@@ -93,7 +95,8 @@ and `noexcept`. JSON conversion continues to use the checked converters.
 
 Include `<json_config/config.h>` and import `nom.json_config`, as shown in the
 [usage example](json_cpp_mapping.md#declaring-a-config). Link the CMake target
-`nom::json_config`.
+`nom::json_config`. Its public dependency on `nom::config_types` supplies the
+common module. Both targets are installed with the `json_config` package.
 
 | Operation | Purpose |
 |---|---|
@@ -109,16 +112,16 @@ void from_json(const nlohmann::json& document, domain_type& value);
 void to_json(nlohmann::json& document, const domain_type& value);
 ```
 
-Use `NOM_CONFIG` for ordinary structure mappings. For renamed keys or domain
+Use `NOM_JCONFIG` for ordinary structure mappings. For renamed keys or domain
 types represented by a scalar or collection, write a converter using `at()`,
 `get_to()`, assignment, and other nlohmann/json facilities directly.
 
 To use a custom type as a config member, explicitly enable it before its first
-use in `NOM_CONFIG`:
+use in `NOM_JCONFIG`:
 
 ```cpp
 template <>
-inline constexpr bool nom::jcfg::enable_config_type<domain_type> = true;
+inline constexpr bool nom::enable_config_type<domain_type> = true;
 ```
 
 Enabling a type does not supply its converters. Those converters remain
@@ -145,13 +148,14 @@ JSON objects with config consumers must use the same diagnostic setting.
 ## Default and optional wrappers
 
 Use an ordinary member for a required value, a default wrapper for an omittable
-value with a C++ default, and `std::optional<T>` for a value that can be absent.
-The default wrapper is `nom::jcfg::defaulted<T>`, an aggregate with a public
+value with a C++ default, and `cfg_optional<T>` (an alias of `std::optional<T>`)
+for a value that can be absent.
+The default wrapper is `nom::cfg_defaulted<T>`, an aggregate with a public
 `value` member and mutable and const `get()` accessors. With
-`using namespace nom::jcfg::types;`, initialize it as `defaulted<jint> timeout_s{5}`. The
+`using namespace nom::cfg_types;`, initialize it as `cfg_defaulted<cfg_int> timeout_s{5}`. The
 [usage example](json_cpp_mapping.md#declaring-a-config) combines all three policies.
 
-`defaulted<T>` implicitly converts to `T&` or `const T&` and provides mutable and
+`cfg_defaulted<T>` implicitly converts to `T&` or `const T&` and provides mutable and
 const `operator->` and `operator*`. These operations are `constexpr` and `noexcept`
 and access the stored value without copying. Use `config.connection->address` for
 a defaulted object and `*timeout_s > 0` for a defaulted number. Dereferencing the
@@ -161,8 +165,8 @@ chain. A defaulted value is always present, so no presence check is needed.
 | Member | Missing key | Explicit `null` | Other supplied value |
 |---|---|---|---|
 | Ordinary `T` | Error, even if the member has a C++ initializer | Accepted only if the mapping for `T` supports it | Map to `T` |
-| `defaulted<T>` | Retain the initialized value | Retain the initialized value | Map to the wrapped `T` |
-| `std::optional<T>` | Retain the initialized optional | Clear it to `std::nullopt` | Map to the contained `T` |
+| `cfg_defaulted<T>` | Retain the initialized value | Retain the initialized value | Map to the wrapped `T` |
+| `cfg_optional<T>` | Retain the initialized optional | Clear it to `std::nullopt` | Map to the contained `T` |
 
 An optional may itself have an initial value. Omitting its key preserves that
 value; explicit `null` clears it. A malformed supplied value fails mapping and
@@ -177,12 +181,12 @@ The small optional-member helper handles presence and delegates the contained
 value to `get_to()`. The pinned nlohmann/json version already serializes optionals,
 but does not deserialize them in the current configuration. This helper supports
 `std::optional<T>` members with an enabled contained type. Optional container
-elements and `defaulted<std::optional<T>>` are not supported. There is no
+elements and `cfg_defaulted<std::optional<T>>` are not supported. There is no
 global specialization of `nlohmann::adl_serializer<std::optional<T>>`.
 
 ## Object shape and nested defaults
 
-Every structure mapped by `NOM_CONFIG` requires a JSON object. Numbers, strings,
+Every structure mapped by `NOM_JCONFIG` requires a JSON object. Numbers, strings,
 arrays, and `null` fail at that boundary. An enclosing default or optional wrapper
 handles its own `null` rule before invoking the structure's mapping.
 
@@ -217,13 +221,14 @@ Direct nlohmann/json conversion to ordinary numeric types can lose information:
 `1.5` converted to `int` produces `1`. Root `validate()` cannot recover the original
 fractional value afterward, so config numeric types check the source first.
 
-`jint` and `juint` reject booleans, floating-point values (including `1.0`),
-and integers outside their destination range. `juint` also rejects negative
-integers. `jdouble` accepts integer and floating-point JSON numbers, requires
-a finite result, and allows normal floating-point rounding. It also rejects
-nonfinite values during serialization.
+The JSON converters for `cfg_int` and `cfg_uint` reject booleans, floating-point
+values (including `1.0`), and integers outside their destination range.
+The `cfg_uint` converter also rejects negative integers. The `cfg_double`
+converter accepts integer and floating-point JSON numbers, requires a finite
+result, and allows normal floating-point rounding. It also rejects nonfinite
+values during serialization.
 
-These checks live in the types' ordinary `from_json`/`to_json` converters.
+These checks live in this library's JSON converters, not in the common types.
 nlohmann/json invokes the same converters inside wrappers and containers; there
 is no separate conversion framework. Application-specific converters can add
 domain constraints. Keep source-value checks separate from the root

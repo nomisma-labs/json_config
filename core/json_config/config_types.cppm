@@ -3,10 +3,8 @@
 
 module;
 
-#include <cmath>
 #include <concepts>
 #include <cstdint>
-#include <limits>
 #include <map>
 #include <optional>
 #include <string>
@@ -14,13 +12,13 @@ module;
 #include <unordered_map>
 #include <vector>
 
-export module nom.json_config:types;
+export module nom.config_types;
 
-export namespace nom::jcfg
+export namespace nom
 {
     namespace detail
     {
-        template <typename Value> struct number
+        template <typename Value> struct config_number
         {
             static_assert(std::same_as<Value, std::int64_t> || std::same_as<Value, std::uint64_t> ||
                           std::same_as<Value, double>);
@@ -41,70 +39,21 @@ export namespace nom::jcfg
                 return value;
             }
         };
-
-        // Validate the source before asking nlohmann to perform its conversion.
-        template <typename Json, typename Value> void from_json(const Json& document, number<Value>& destination)
-        {
-            if constexpr (std::same_as<Value, double>)
-            {
-                if (!document.is_number())
-                {
-                    throw Json::type_error::create(302, "expected a number, got " + document.dump(), &document);
-                }
-                const auto value = document.template get<double>();
-                if (!std::isfinite(value))
-                {
-                    throw Json::out_of_range::create(
-                        406, "expected a finite number, got " + std::to_string(value), &document);
-                }
-                destination.value = value;
-            }
-            else
-            {
-                if (!document.is_number_integer())
-                {
-                    throw Json::type_error::create(302, "expected an integer, got " + document.dump(), &document);
-                }
-                if constexpr (std::same_as<Value, std::int64_t>)
-                {
-                    if (document.is_number_unsigned() &&
-                        document.template get<std::uint64_t>() > std::numeric_limits<std::int64_t>::max())
-                    {
-                        throw Json::out_of_range::create(
-                            406, "integer exceeds the signed 64-bit range, got " + document.dump(), &document);
-                    }
-                }
-                else
-                {
-                    if (!document.is_number_unsigned() && document.template get<std::int64_t>() < 0)
-                    {
-                        throw Json::out_of_range::create(
-                            406, "expected a nonnegative integer, got " + document.dump(), &document);
-                    }
-                }
-                destination.value = document.template get<Value>();
-            }
-        }
-
-        template <typename Json, typename Value> void to_json(Json& document, const number<Value>& source)
-        {
-            if constexpr (std::same_as<Value, double>)
-            {
-                if (!std::isfinite(source.value))
-                {
-                    throw Json::out_of_range::create(
-                        406, "expected a finite number, got " + std::to_string(source.value), &document);
-                }
-            }
-            document = source.value;
-        }
     } // namespace detail
 
-    using jint = detail::number<std::int64_t>;
-    using juint = detail::number<std::uint64_t>;
-    using jdouble = detail::number<double>;
+    using cfg_int = detail::config_number<std::int64_t>;
+    using cfg_uint = detail::config_number<std::uint64_t>;
+    using cfg_double = detail::config_number<double>;
+    using cfg_bool = bool;
+    using cfg_string = std::string;
 
-    template <typename Value> struct defaulted
+    template <typename Value> using cfg_vector = std::vector<Value>;
+    template <typename Value> using cfg_map = std::map<std::string, Value>;
+    template <typename Value> using cfg_unordered_map = std::unordered_map<std::string, Value>;
+    template <typename Value> using cfg_optional = std::optional<Value>;
+
+    // Carries an application default; a format adapter decides when to retain it.
+    template <typename Value> struct cfg_defaulted
     {
         Value value{};
 
@@ -145,52 +94,54 @@ export namespace nom::jcfg
         }
     };
 
-    template <typename Json, typename Value> void from_json(const Json& document, defaulted<Value>& destination)
+    namespace cfg_types
     {
-        if (!document.is_null())
-        {
-            document.get_to(destination.value);
-        }
-    }
+        using ::nom::cfg_bool;
+        using ::nom::cfg_double;
+        using ::nom::cfg_int;
+        using ::nom::cfg_string;
+        using ::nom::cfg_uint;
 
-    template <typename Json, typename Value> void to_json(Json& document, const defaulted<Value>& source)
-    {
-        document = source.value;
-    }
+        using ::nom::cfg_defaulted;
+        using ::nom::cfg_map;
+        using ::nom::cfg_optional;
+        using ::nom::cfg_unordered_map;
+        using ::nom::cfg_vector;
+    } // namespace cfg_types
 
-    namespace types
-    {
-        using nom::jcfg::defaulted;
-        using nom::jcfg::jdouble;
-        using nom::jcfg::jint;
-        using nom::jcfg::juint;
-    } // namespace types
-
-    // Explicit opt-in for application-owned types with nlohmann ADL converters.
+    // Applications opt in their structures or custom scalar types explicitly.
+    // Opt-in does not inspect members or supply a serialization mapping.
     template <typename Value> inline constexpr bool enable_config_type = false;
 
     namespace detail
     {
         template <typename Value> std::false_type nom_config_type(Value*);
 
-        template <typename Value>
-        inline constexpr bool is_config_value =
-            enable_config_type<Value> || decltype(nom_config_type(static_cast<Value*>(nullptr)))::value;
-
-        template <> inline constexpr bool is_config_value<bool> = true;
-        template <> inline constexpr bool is_config_value<std::string> = true;
-        template <typename Value> inline constexpr bool is_config_value<number<Value>> = true;
-        template <typename Value> inline constexpr bool is_config_value<defaulted<Value>> = is_config_value<Value>;
-        template <typename Value, typename Allocator>
-        inline constexpr bool is_config_value<std::vector<Value, Allocator>> = is_config_value<Value>;
-        template <typename Value, typename Compare, typename Allocator>
-        inline constexpr bool is_config_value<std::map<std::string, Value, Compare, Allocator>> =
-            is_config_value<Value>;
-        template <typename Value, typename Hash, typename Equal, typename Allocator>
-        inline constexpr bool is_config_value<std::unordered_map<std::string, Value, Hash, Equal, Allocator>> =
-            is_config_value<Value>;
-
-        template <typename Value> inline constexpr bool is_config_member = is_config_value<Value>;
-        template <typename Value> inline constexpr bool is_config_member<std::optional<Value>> = is_config_value<Value>;
+        template <typename Value> constexpr bool custom_config_type_enabled()
+        {
+            if constexpr (std::is_class_v<Value> || std::is_enum_v<Value>)
+            {
+                // An adapter may instead declare this marker beside an application type.
+                return enable_config_type<Value> || decltype(nom_config_type(static_cast<Value*>(nullptr)))::value;
+            }
+            return false;
+        }
     } // namespace detail
-} // namespace nom::jcfg
+
+    template <typename Value> inline constexpr bool is_config_value = detail::custom_config_type_enabled<Value>();
+    template <> inline constexpr bool is_config_value<cfg_bool> = true;
+    template <> inline constexpr bool is_config_value<cfg_string> = true;
+    template <typename Value> inline constexpr bool is_config_value<detail::config_number<Value>> = true;
+    template <typename Value> inline constexpr bool is_config_value<cfg_defaulted<Value>> = is_config_value<Value>;
+    template <typename Value, typename Allocator>
+    inline constexpr bool is_config_value<std::vector<Value, Allocator>> = is_config_value<Value>;
+    template <typename Value, typename Compare, typename Allocator>
+    inline constexpr bool is_config_value<std::map<std::string, Value, Compare, Allocator>> = is_config_value<Value>;
+    template <typename Value, typename Hash, typename Equal, typename Allocator>
+    inline constexpr bool is_config_value<std::unordered_map<std::string, Value, Hash, Equal, Allocator>> =
+        is_config_value<Value>;
+
+    // An optional is a structure member, not an array element or a map value.
+    template <typename Value> inline constexpr bool is_config_member = is_config_value<Value>;
+    template <typename Value> inline constexpr bool is_config_member<std::optional<Value>> = is_config_value<Value>;
+} // namespace nom

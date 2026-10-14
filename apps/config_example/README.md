@@ -22,17 +22,18 @@ collected into `build/dev/config/config_example/`. The build also generates
 
 ## Config structure
 
-[main.cpp](main.cpp) defines `app_config`, maps its members using `NOM_CONFIG`,
+[main.cpp](main.cpp) defines `app_config`, maps its members using `NOM_JCONFIG`,
 and implements the root `validate()` protocol.
 
 | Field | C++ type | Default / constraint |
 |---|---|---|
-| `endpoint` | `defaulted<std::string>` | `https://example.test/feed`; must be nonempty |
-| `timeout_s` | `defaulted<jint>` | `10`; must be positive |
-| `enabled` | `defaulted<bool>` | `true` |
-| `interface_name` | `std::optional<std::string>` | Absent by default |
+| `endpoint` | `cfg_defaulted<cfg_string>` | `https://example.test/feed`; must be nonempty |
+| `timeout_s` | `cfg_defaulted<cfg_int>` | `10`; must be positive |
+| `enabled` | `cfg_defaulted<cfg_bool>` | `true` |
+| `interface_name` | `cfg_optional<cfg_string>` | Absent by default |
 
-The types are available through `nom::jcfg::types`. All fields are defaulted or
+The common types are available through `nom::cfg_types`; `nom.json_config`
+re-exports their format-independent module. All fields are defaulted or
 optional, so loading an empty JSON object succeeds. If config lookup finds no
 file, these C++ defaults also support hard-wired initialization.
 

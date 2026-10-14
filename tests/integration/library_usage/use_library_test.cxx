@@ -9,38 +9,13 @@
 #include <string_view>
 #include <vector>
 
+import consumer.config_model;
 import nom.json_config;
 
 namespace consumer
 {
-    using namespace nom::jcfg::types;
-
-    struct connection_config
-    {
-        std::string address;
-        defaulted<jint> timeout_s{5};
-        std::optional<std::string> interface_name;
-    };
-
-    NOM_CONFIG(connection_config, address, timeout_s, interface_name)
-
-    struct app_config
-    {
-        defaulted<connection_config> connection{{"", {42}, "loopback"}};
-        defaulted<bool> enabled{true};
-        std::optional<std::string> annotation;
-
-        std::expected<void, std::string> validate() const
-        {
-            if (connection->address.empty() || *connection->timeout_s <= 0)
-            {
-                return std::unexpected("connection requires an address and a positive timeout");
-            }
-            return {};
-        }
-    };
-
-    NOM_CONFIG(app_config, connection, enabled, annotation)
+    NOM_JCONFIG(connection_config, address, timeout_s, interface_name)
+    NOM_JCONFIG(app_config, connection, enabled, annotation)
 } // namespace consumer
 
 int main()

@@ -26,15 +26,15 @@ import nom.json_config;
 
 namespace runtime_fixture
 {
-    using namespace nom::jcfg::types;
+    using namespace nom::cfg_types;
 
     struct app_config
     {
-        std::string label;
-        jint lower;
-        jint upper;
-        std::optional<jint> retries;
-        defaulted<bool> active{true};
+        cfg_string label;
+        cfg_int lower;
+        cfg_int upper;
+        cfg_optional<cfg_int> retries;
+        cfg_defaulted<cfg_bool> active{true};
 
         inline static int validation_count{};
 
@@ -49,13 +49,13 @@ namespace runtime_fixture
         }
     };
 
-    NOM_CONFIG(app_config, label, lower, upper, retries, active)
+    NOM_JCONFIG(app_config, label, lower, upper, retries, active)
 
     struct hard_wired_config
     {
-        defaulted<jint> count{3};
-        defaulted<std::string> label{"built-in"};
-        std::optional<jint> spare;
+        cfg_defaulted<cfg_int> count{3};
+        cfg_defaulted<cfg_string> label{"built-in"};
+        cfg_optional<cfg_int> spare;
 
         std::expected<void, std::string> validate() const
         {
@@ -67,11 +67,11 @@ namespace runtime_fixture
         }
     };
 
-    NOM_CONFIG(hard_wired_config, count, label, spare)
+    NOM_JCONFIG(hard_wired_config, count, label, spare)
 
     struct required_config
     {
-        jint count{4};
+        cfg_int count{4};
 
         std::expected<void, std::string> validate() const
         {
@@ -79,11 +79,11 @@ namespace runtime_fixture
         }
     };
 
-    NOM_CONFIG(required_config, count)
+    NOM_JCONFIG(required_config, count)
 
     struct throwing_config
     {
-        defaulted<bool> active{true};
+        cfg_defaulted<cfg_bool> active{true};
 
         std::expected<void, std::string> validate() const
         {
@@ -91,7 +91,7 @@ namespace runtime_fixture
         }
     };
 
-    NOM_CONFIG(throwing_config, active)
+    NOM_JCONFIG(throwing_config, active)
 
     struct fixture
     {
