@@ -1,0 +1,80 @@
+# Post-v0.1.0 release TODO
+
+Follow-up work for discussion and review. Review the implementation first, then
+revisit application initialization. The convenience API and user-local config
+layer below are proposals, with design decisions still open.
+
+## 1. Review key source files and workflows
+
+Review each significant script and C++ source, together with its tests and the
+workflows it supports:
+
+- [ ] [tools/jcfg.py](tools/jcfg.py)
+- [ ] [tools/jcfggen.py](tools/jcfggen.py)
+- [ ] [tools/jcfg_build.py](tools/jcfg_build.py)
+- [ ] [core/json_config/config_loader.cpp](core/json_config/config_loader.cpp)
+- [ ] [core/json_config/config_locator.cpp](core/json_config/config_locator.cpp)
+- [ ] [core/json_config/config_options.cpp](core/json_config/config_options.cpp) — revisit enum stringification.
+- [ ] [core/json_config/config_runtime.cppm](core/json_config/config_runtime.cppm) — review whether the name reflects its responsibilities.
+- [ ] Work through the build, usage, and test instructions in every example README:
+  [config_workflow_example](apps/config_workflow_example/README.md),
+  [config_args_example](apps/config_args_example/README.md), and
+  [md_capture](apps/md_capture/README.md).
+
+## 2. Revisit application initialization
+
+Do this after the source review. Cover command-line arguments, config discovery,
+and loading. The goal is to make the common case concise while allowing
+applications to define and validate their own arguments.
+
+### Current behavior and constraints to preserve
+
+- `main()` owns initialization, services, error reporting, and exit codes. Prefer
+  meaningful startup code there over a `run_app()` wrapper.
+- `parse_config_arguments()` extracts framework options and preserves the remaining
+  arguments. In `config_args_example`, the application parses those with
+  Boost.Program_options and handles help before calling `load_config<Config>(options)`.
+- Loading resolves the config source, reads JSON (or uses hard-wired defaults),
+  substitutes runtime variables, applies command-line overrides, maps to C++, and
+  validates. The library returns the load result or reports errors to its caller.
+- Application help and argument validation happen before config I/O. After
+  successful loading, `--check-config` exits before application services start.
+
+See [application integration](docs/json_config/app_config_binding.md#application-integration)
+and the working examples:
+[config_workflow_example](apps/config_workflow_example/README.md) and
+[config_args_example](apps/config_args_example/README.md). Keep detailed usage in
+their READMEs and link to it contextually from other docs.
+
+### Proposal and open questions
+
+- [ ] Consider `load_config<Config>(argc, argv, key)` for config-only applications,
+  reusing the existing implementation. Keep separate parsing and loading interfaces
+  available for more elaborate applications.
+- [ ] Decide the overload's return shape and handling of unexpected arguments.
+- [ ] Decide how to expose standard config help alongside application help.
+- [ ] Decide how much diagnostic reporting belongs in the example.
+
+## 3. Add a user-local config layer
+
+This is a convenience feature to design first. **User-local config layer** is the
+working name: it describes the additional source of settings, while "override"
+describes its effect. Naming is not settled.
+
+The initial idea is to keep local, possibly unversioned JSON files that the
+generator imports and automatically applies to any generated config as its final
+JSON merge. Unlike a standalone development config, which is a base config that
+does not require generation, this layer would customize generated configs without
+editing each one.
+
+- [ ] Agree on the name: **user-local config layer**, **user config layer**, or
+  **local config overrides**.
+- [ ] Resolve when the layer is applied. The requested precedence is runtime
+  `run-var` substitution, then the user-local layer, then command-line overrides.
+  Currently, generation preserves `{jcfg:run-var NAME}` for substitution by the
+  C++ loader. A final generation-time merge would therefore happen before
+  `run-var` substitution. Decide how to reconcile these two parts of the proposal.
+- [ ] Define file naming, discovery, and scope: how local files are selected and
+  how their automatic application across generated configs is controlled.
+- [ ] Define merge behavior, ordering between multiple local files, and handling
+  of missing or invalid local files.
