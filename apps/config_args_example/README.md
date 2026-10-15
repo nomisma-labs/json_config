@@ -120,10 +120,11 @@ precedence, environment selection, runtime variables, and override rules.
 
 ## Tests
 
-After building the app with tests enabled, run its CLI integration suite:
+After building the `complete` preset, run its CLI integration suite; a `dev` build leaves
+integration tests out:
 
 ```bash
-ctest --preset dev -R '^json_config_config_args_example_cli$'
+ctest --preset complete -R '^json_config_config_args_example_cli$'
 ```
 
 The [suite](../../tests/integration/config_args/cli_test.py) contains nine Python

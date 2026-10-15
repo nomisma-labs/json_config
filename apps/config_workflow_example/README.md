@@ -115,10 +115,11 @@ Generation can also be requested separately:
 cmake --build --preset dev --target json_config_generate_jcfg_config_workflow_example
 ```
 
-When tests are enabled, run the example's four CTest entries with:
+In a `complete` build, run the example's four CTest entries with the command below; a `dev`
+build leaves integration tests out and runs only the two `nom_jcfg_test()` checks:
 
 ```bash
-ctest --preset dev -R '^json_config_config_workflow_example_'
+ctest --preset complete -R '^json_config_config_workflow_example_'
 ```
 
 Two `nom_jcfg_test()` checks exercise the real loader, mapping, and validation for

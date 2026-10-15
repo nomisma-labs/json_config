@@ -77,10 +77,11 @@ validation because an empty symbol list is not a usable capture subscription.
 ## Tests
 
 [CMakeLists.txt](CMakeLists.txt) registers one `nom_jcfg_test()` per section.
-After building the app, run its checks with:
+After building the `complete` preset, run its checks with the command below; a `dev` build
+leaves integration tests out and runs only the four section checks:
 
 ```bash
-ctest --preset dev -R '^json_config_md_capture_'
+ctest --preset complete -R '^json_config_md_capture_'
 ```
 
 Four tests run `--check-config` on the generated sections. A CLI suite compares
