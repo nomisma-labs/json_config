@@ -6,6 +6,10 @@ and versions follow [Semantic Versioning](https://semver.org); how to release:
 
 ## [Unreleased]
 
+- Move ownership of `nom.config_types` and `nom::config_types` to the `base` dependency.
+  JSON consumers retain the same imports and targets; standalone common-type consumers
+  use `find_package(base)`. Common-type tests and documentation now live in `base`.
+
 ## [0.1.0] - 2026-10-15
 
 The first complete application configuration workflow: define layered configs in

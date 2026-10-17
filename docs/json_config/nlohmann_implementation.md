@@ -8,9 +8,9 @@ nlohmann/json 3.12.0.
 by `config.h`. It scopes a GCC 16 release-build `-Warray-bounds` workaround to
 nlohmann's diagnostic parent tracking; application warnings remain enabled.
 
-The [config types design note](config_types_design.md) explains why the special
+The [config types design note](https://github.com/nomisma-labs/base/blob/master/docs/base/config_types_design.md) explains why the special
 types were introduced and how common C++ data is separated from JSON mapping.
-This repository's `nom.config_types` module owns the types; `nom.json_config`
+The `base` dependency's `nom.config_types` module owns the types; `nom.json_config`
 supplies their JSON converters and re-exports the common module.
 
 ## Overview of nlohmann/json facilities
@@ -82,7 +82,7 @@ recursively to wrappers and container elements.
 
 All common types have aliases in `nom::cfg_types`; both spellings name the same
 types. Standard-library aliases remain usable under their original names. The
-[type guide](config_types.md) lists their definitions.
+[type guide](https://github.com/nomisma-labs/base/blob/master/docs/base/config_types.md) lists their definitions.
 
 `cfg_defaulted<T>` and optional members apply the presence policies described
 below. Plain numeric types such as `int`, `unsigned`, and `double` are not enabled.
@@ -96,7 +96,8 @@ and `noexcept`. JSON conversion continues to use the checked converters.
 Include `<json_config/config.h>` and import `nom.json_config`, as shown in the
 [usage example](json_cpp_mapping.md#declaring-a-config). Link the CMake target
 `nom::json_config`. Its public dependency on `nom::config_types` supplies the
-common module. Both targets are installed with the `json_config` package.
+common module. The installed `json_config` package finds the `base` package, which
+exports the common target; JSON consumers still need only `find_package(json_config)`.
 
 | Operation | Purpose |
 |---|---|

@@ -16,6 +16,10 @@ include(cmake/json_config/config.cmake)
 # Dependencies come from external/ submodules (docs/kit/howto.md#a-dependency). In a superbuild the
 # outermost FetchContent_Declare wins, so every repo shares one copy.
 
+nom_require_submodule(external/base)
+FetchContent_Declare(base SOURCE_DIR ${PROJECT_SOURCE_DIR}/external/base)
+FetchContent_MakeAvailable(base)
+
 # nlohmann_json's own CMake project works as a subproject, so it is used as is.
 nom_require_submodule(external/nlohmann_json)
 set(JSON_Install ${nom_install}) # find_package consumers need nlohmann next to our package

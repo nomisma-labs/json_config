@@ -12,9 +12,9 @@ Implementation availability is tracked in the [repository status](../../README.m
 
 ## Implementation notes
 
-- [Config types](config_types.md) — supported types and their CMake integration.
+- [Config types](https://github.com/nomisma-labs/base/blob/master/docs/base/config_types.md) — common types and their CMake integration, owned by `base`.
 - [nlohmann/json implementation](nlohmann_implementation.md) — JSON mapping and conversion details.
-- [Config types and serialization dependencies](config_types_design.md) — separation of common C++ config data from JSON mapping.
+- [Config types and serialization dependencies](https://github.com/nomisma-labs/base/blob/master/docs/base/config_types_design.md) — separation of common C++ config data from JSON mapping.
 
 ## Learning by example
 

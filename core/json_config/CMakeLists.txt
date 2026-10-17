@@ -1,9 +1,6 @@
 # SPDX-FileCopyrightText: 2026 Alexey Tkachenko
 # SPDX-License-Identifier: LicenseRef-Nomisma-Labs-Proprietary
 
-nom_lib(config_types STATIC MODULES config_types.cppm)
-set_target_properties(config_types PROPERTIES POSITION_INDEPENDENT_CODE ON)
-
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     set(json_config_os_source util/os_linux.cpp)
 else()
@@ -20,4 +17,4 @@ nom_lib(json_config
 # Keep diagnostic paths available in our converters and source/package consumers.
 target_compile_definitions(json_config PUBLIC JSON_DIAGNOSTICS=1)
 
-nom_install_package(TARGETS config_types json_config DEPENDENCIES nlohmann_json Boost)
+nom_install_package(TARGETS json_config DEPENDENCIES base nlohmann_json Boost)

@@ -7,8 +7,9 @@ JSON/C++ mapping, and build-system integration. The Python resolution engine,
 generator CLI, generation-specific CMake helpers, C++ mapping module, locator,
 runtime loader, and their tests are implemented.
 The public C++ API is `nom.json_config`, with `NOM_JCONFIG` in
-`<json_config/config.h>`. This repo owns the format-independent `nom::cfg_*`
-types in `nom.config_types` and their JSON mapping and numeric conversion checks.
+`<json_config/config.h>`. The `base` dependency owns the format-independent
+`nom::cfg_*` types in `nom.config_types`; this repo supplies their JSON mapping
+and numeric conversion checks, and re-exports the common module.
 The config collector and nlohmann/json dependency are inherited from `cmake_template`.
 Boost (program_options, filesystem and iostreams) is also inherited and found by
 `nom_find_boost()`.

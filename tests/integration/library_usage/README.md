@@ -11,7 +11,8 @@ From the repository root, after building a preset with tests and installation en
 ctest --test-dir build/ci -R 'json_config_library_usage_' --output-on-failure
 ```
 
-The consumer's model imports only `nom.config_types`. Its executable adds
+The consumer's model imports only `nom.config_types`, supplied transitively by the
+`base` dependency in both source and installed-package builds. Its executable adds
 `NOM_JCONFIG` bindings and checks mapping, serialization, defaults, diagnostics,
 hard-wired loading, and command-line parsing. Separate compile-failure tests reject
 unsupported config member types.

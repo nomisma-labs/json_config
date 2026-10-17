@@ -70,7 +70,7 @@ at compile time; use `cfg_int`, `cfg_uint`, or `cfg_double` from `nom::cfg_types
 
 Serialization and deserialization use nlohmann/json directly. Custom domain
 types can be explicitly enabled and supply normal `from_json`/`to_json` converters.
-The [type guide](config_types.md) describes the format-independent
+The [type guide](https://github.com/nomisma-labs/base/blob/master/docs/base/config_types.md) describes the format-independent
 types, aliases, and CMake target. Linking `nom::json_config` supplies that target
 transitively, including when consuming an installed package.
 

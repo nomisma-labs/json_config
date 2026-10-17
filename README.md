@@ -31,10 +31,11 @@ through `import nom.json_config;` and the CMake target `nom::json_config`.
 `NOM_JCONFIG` in `<json_config/config.h>` maps application structures with required,
 defaulted, and optional members using nlohmann/json. It enforces supported config
 types, including checked JSON conversions for `cfg_int`, `cfg_uint`, and `cfg_double`.
-The [common config types](docs/json_config/config_types.md) belong to `nom`, with
-convenience aliases in `nom::cfg_types`. This repository owns the format-independent
-`nom.config_types` module, re-exported by `nom.json_config`; its CMake target is a
-transitive dependency for both source and installed consumers.
+The [common config types](https://github.com/nomisma-labs/base/blob/master/docs/base/config_types.md) belong to `nom`, with
+convenience aliases in `nom::cfg_types`. The `base` dependency owns the format-independent
+`nom.config_types` module, re-exported by `nom.json_config`; its `nom::config_types` target is a
+transitive dependency for both source and installed consumers. Data-only consumers can use
+`find_package(base)` and link `nom::config_types` without the JSON library.
 Mapping and application validation are separate. The
 [C++ locator and loader](docs/json_config/app_config_binding.md) resolve a config,
 read JSON, substitute runtime variables, apply command-line overrides, then map
