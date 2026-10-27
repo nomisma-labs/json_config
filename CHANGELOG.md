@@ -6,10 +6,15 @@ and versions follow [Semantic Versioning](https://semver.org); how to release:
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-10-28
+
 ### Changed
 
+- Update the `base` submodule to v0.2.1 so standalone and composed builds use the same
+  standard-library module support and common configuration types.
 - Sync the shared build kit to cmake_template v0.11.2 and adopt `import std;` in C++
   modules and consumers, retaining macro and third-party header boundaries.
+  Include the follow-up standard-library documentation correction from template commit `8ad7a4e`.
 - Require CMake 4.4.x and enable standard-library module detection before `project()`
   in both the repository and source/installed-package consumer projects.
 
