@@ -17,7 +17,7 @@ Run all commands in this README from the repository root. Follow the shared
 
 ```bash
 cmake --preset dev
-cmake --build --preset dev --target json_config_config_workflow_example
+cmake --build --preset dev --target config_workflow_example
 ```
 
 The executable is `build/dev/bin/config_workflow_example`. Its config directory is

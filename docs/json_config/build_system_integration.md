@@ -109,7 +109,8 @@ registration, build dependencies, and installation of generated outputs.
 `cmake_template` provides the existing config collector and remains unaware of
 generation. Client repositories use the helpers supplied by `json_config` and
 declare their app settings through `nom_jcfg_generate()`.
-The app name is the short name supplied to `nom_app()` in the same project.
+The app name is the exact target name supplied to `nom_app()` in the same project.
+Config-generation targets and CTest names retain their project prefix.
 One app registers one source; apps sharing that source must use the same section
 selection and explicit environment. Source, section and output names containing
 semicolons or newlines are unsupported by the CMake integration.

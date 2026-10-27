@@ -1,11 +1,11 @@
 # SPDX-FileCopyrightText: 2026 Alexey Tkachenko
 # SPDX-License-Identifier: LicenseRef-Nomisma-Labs-Proprietary
 
-if(TARGET ${PROJECT_NAME}_config_args_example)
+if(TARGET config_args_example)
     find_package(Python 3.10 REQUIRED COMPONENTS Interpreter)
     add_test(NAME ${PROJECT_NAME}_config_args_example_cli
         COMMAND ${CMAKE_COMMAND} -E env
-            "JCFG_APP_TEST_EXECUTABLE=$<TARGET_FILE:${PROJECT_NAME}_config_args_example>"
+            "JCFG_APP_TEST_EXECUTABLE=$<TARGET_FILE:config_args_example>"
             ${Python_EXECUTABLE} -m unittest discover
             -s "${CMAKE_CURRENT_SOURCE_DIR}"
             -p "*_test.py"

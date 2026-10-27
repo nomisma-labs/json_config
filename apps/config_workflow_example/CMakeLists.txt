@@ -10,7 +10,7 @@ nom_jcfg_test(config_workflow_example prod)
 
 if(nom_build_tests AND nom_build_apps)
     add_test(NAME ${PROJECT_NAME}_config_workflow_example_check
-        COMMAND $<TARGET_FILE:${PROJECT_NAME}_config_workflow_example>
+        COMMAND $<TARGET_FILE:config_workflow_example>
             --config "${NOM_COLLECTION_CONFIG_DIR}/config_workflow_example/config_workflow_example.json"
             --set /timeout_s=20 --check-config)
     set_tests_properties(${PROJECT_NAME}_config_workflow_example_check PROPERTIES LABELS integration)

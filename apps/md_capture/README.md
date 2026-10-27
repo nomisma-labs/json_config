@@ -18,7 +18,7 @@ Run these commands from the repository root after installing the
 
 ```bash
 cmake --preset dev
-cmake --build --preset dev --target json_config_md_capture
+cmake --build --preset dev --target md_capture
 build/dev/bin/md_capture --config build/dev/config/md_capture/md_capture.json
 build/dev/bin/md_capture --config build/dev/genconfig/prod/md_capture.json
 build/dev/bin/md_capture --config build/dev/genconfig/prod-liquidation/md_capture_liquidation.json

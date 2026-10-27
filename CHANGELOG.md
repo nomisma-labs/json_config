@@ -6,6 +6,11 @@ and versions follow [Semantic Versioning](https://semver.org); how to release:
 
 ## [Unreleased]
 
+- Sync the shared build infrastructure with cmake_template v0.11.1; `nom_app()` uses the
+  supplied target name without a project prefix.
+  Update config-generation helpers, app references and build tests to use those targets;
+  generated-config CTest names keep their project prefix.
+
 - Move ownership of `nom.config_types` and `nom::config_types` to the `base` dependency.
   JSON consumers retain the same imports and targets; standalone common-type consumers
   use `find_package(base)`. Common-type tests and documentation now live in `base`.
