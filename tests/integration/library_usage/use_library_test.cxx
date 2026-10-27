@@ -3,13 +3,7 @@
 
 #include <json_config/config.h>
 
-#include <expected>
-#include <filesystem>
-#include <iostream>
-#include <optional>
-#include <string>
-#include <string_view>
-#include <vector>
+import std;
 
 import consumer.config_model;
 import nom.json_config;

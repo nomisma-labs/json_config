@@ -3,6 +3,8 @@
 
 #include "os.h"
 
+import std;
+
 namespace nom::jcfg::os
 {
     std::filesystem::path executable_path()

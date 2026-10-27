@@ -3,6 +3,9 @@
 
 nom_app(config_workflow_example SOURCES main.cpp DEPS nom::json_config
     COMPILE_OPTIONS -DNOM_CONFIG_KEY=config_workflow_example)
+if(TARGET config_workflow_example)
+    nom_enable_std_modules(config_workflow_example)
+endif()
 
 nom_jcfg_generate(config_workflow_example SOURCE config_workflow_example_jcfg.json BUILD_WITH_APP)
 nom_jcfg_test(config_workflow_example dev)

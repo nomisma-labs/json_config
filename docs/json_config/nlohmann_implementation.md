@@ -23,7 +23,7 @@ macro:
 ```cpp
 #include <json_config/nlohmann_json.h>
 
-#include <string>
+import std;
 
 import nom.json_config;
 

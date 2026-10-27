@@ -5,18 +5,9 @@ module;
 
 #include "util/os.h"
 
-#include <exception>
-#include <filesystem>
-#include <fstream>
-#include <initializer_list>
-#include <new>
-#include <optional>
-#include <string>
-#include <string_view>
-#include <system_error>
-#include <vector>
-
 module nom.json_config;
+
+import std;
 
 namespace nom::jcfg
 {

@@ -5,6 +5,10 @@ against an installation and `FetchContent` against the source tree. The reposito
 registers both through `nom_library_usage_tests()`; package tests also require
 `nom_install`.
 
+The consumer enables standard-library module detection before `project()` and opts its
+model, executable, and compile-failure targets into `nom_enable_std_modules()`. Sources use
+`import std;` for standard-library declarations and retain textual macro/third-party includes.
+
 From the repository root, after building a preset with tests and installation enabled:
 
 ```sh

@@ -3,7 +3,7 @@
 
 #include <json_config/config.h>
 
-#include <vector>
+import std;
 
 import nom.json_config;
 

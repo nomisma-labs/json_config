@@ -5,17 +5,7 @@
 #include <catch2/matchers/catch_matchers_string.hpp>
 #include <json_config/config.h>
 
-#include <chrono>
-#include <filesystem>
-#include <fstream>
-#include <map>
-#include <new>
-#include <optional>
-#include <stdexcept>
-#include <string>
-#include <string_view>
-#include <system_error>
-#include <vector>
+import std;
 
 import nom.json_config;
 

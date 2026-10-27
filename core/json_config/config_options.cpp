@@ -5,18 +5,9 @@ module;
 
 #include <boost/program_options.hpp>
 
-#include <algorithm>
-#include <cstdlib>
-#include <filesystem>
-#include <optional>
-#include <span>
-#include <stdexcept>
-#include <string>
-#include <string_view>
-#include <utility>
-#include <vector>
-
 module nom.json_config;
+
+import std;
 
 namespace nom::jcfg
 {

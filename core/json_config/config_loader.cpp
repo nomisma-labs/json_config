@@ -5,19 +5,9 @@ module;
 
 #include "nlohmann_json.h"
 
-#include <array>
-#include <exception>
-#include <filesystem>
-#include <fstream>
-#include <new>
-#include <optional>
-#include <span>
-#include <string>
-#include <string_view>
-#include <system_error>
-#include <utility>
-
 module nom.json_config;
+
+import std;
 
 namespace nom::jcfg
 {

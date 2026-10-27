@@ -3,12 +3,7 @@
 
 #include <json_config/config.h>
 
-#include <algorithm>
-#include <array>
-#include <expected>
-#include <iostream>
-#include <string>
-#include <string_view>
+import std;
 
 import nom.json_config;
 

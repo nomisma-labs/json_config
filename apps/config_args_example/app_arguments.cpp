@@ -5,8 +5,7 @@
 
 #include <boost/program_options.hpp>
 
-#include <iostream>
-#include <stdexcept>
+import std;
 
 namespace example
 {

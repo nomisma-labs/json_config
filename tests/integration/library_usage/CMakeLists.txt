@@ -1,7 +1,9 @@
 # SPDX-FileCopyrightText: 2026 Alexey Tkachenko
 # SPDX-License-Identifier: LicenseRef-Nomisma-Labs-Proprietary
 
-cmake_minimum_required(VERSION 3.30)
+cmake_minimum_required(VERSION 4.4)
+
+include(${CMAKE_CURRENT_LIST_DIR}/../../../cmake/kit/std_modules.cmake)
 project(json_config_library_usage LANGUAGES CXX)
 
 include("${CMAKE_CURRENT_SOURCE_DIR}/../../../cmake/kit/nom_kit.cmake")
@@ -26,8 +28,10 @@ enable_testing()
 nom_lib(config_model STATIC MODULES config_model.cppm
     BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}"
     PUBLIC_DEPS nom::config_types)
+nom_enable_std_modules(config_model)
 
 add_executable(use_library use_library_test.cxx)
+nom_enable_std_modules(use_library)
 target_link_libraries(use_library PRIVATE nom::config_model nom::json_config)
 add_test(NAME use_library COMMAND use_library)
 
@@ -49,6 +53,7 @@ set_tests_properties(load_generated_config reject_generated_config PROPERTIES
 
 foreach(test_case IN ITEMS integer_member integer_container unregistered_type)
     add_executable(reject_${test_case} EXCLUDE_FROM_ALL reject_config_type_test.cxx)
+    nom_enable_std_modules(reject_${test_case})
     target_link_libraries(reject_${test_case} PRIVATE nom::json_config)
     string(TOUPPER "${test_case}" definition)
     target_compile_definitions(reject_${test_case} PRIVATE "NOM_TEST_${definition}")

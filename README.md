@@ -6,6 +6,12 @@ It shares its design with [toml_config](https://github.com/nomisma-labs/toml_con
 with similar capabilities planned for both format implementations.
 <!-- repo-description:end -->
 
+C++ builds and consumers use CMake 4.4.x, Ninja, GCC 16 or Clang 22, and libstdc++ 16
+standard-library module sources. Enable std module detection before the consumer's first
+`project()` and call `nom_enable_std_modules(target)` on each compiled consumer target.
+See [standard-library module setup](docs/kit/build.md#modules), including package consumers
+without the kit. Macro headers remain textual includes before imports.
+
 The scope includes layered configuration generation with a Python tool
 (`jcfggen.py`), C++ config resolution, JSON/C++ mapping, and build-system
 integration for collecting and generating app configs.

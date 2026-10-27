@@ -19,10 +19,7 @@ keys have the same names as the C++ members:
 ```cpp
 #include <json_config/config.h>
 
-#include <expected>
-#include <optional>
-#include <stdexcept>
-#include <string>
+import std;
 
 import nom.json_config;
 

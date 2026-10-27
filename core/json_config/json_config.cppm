@@ -5,15 +5,9 @@ module;
 
 #include "nlohmann_json.h"
 
-#include <concepts>
-#include <exception>
-#include <expected>
-#include <new>
-#include <optional>
-#include <string>
-#include <utility>
-
 export module nom.json_config;
+
+import std;
 
 export import nom.config_types;
 export import :mapping;

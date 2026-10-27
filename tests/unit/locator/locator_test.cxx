@@ -3,16 +3,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-#include <atomic>
-#include <chrono>
-#include <filesystem>
-#include <fstream>
-#include <map>
-#include <optional>
-#include <string>
-#include <string_view>
-#include <system_error>
-#include <utility>
+import std;
 
 import nom.json_config;
 

@@ -5,16 +5,9 @@ module;
 
 #include <nlohmann/json_fwd.hpp>
 
-#include <filesystem>
-#include <functional>
-#include <optional>
-#include <span>
-#include <stdexcept>
-#include <string>
-#include <string_view>
-#include <vector>
-
 export module nom.json_config:runtime;
+
+import std;
 
 export namespace nom::jcfg
 {

@@ -1,15 +1,9 @@
 // SPDX-FileCopyrightText: 2026 Alexey Tkachenko
 // SPDX-License-Identifier: LicenseRef-Nomisma-Labs-Proprietary
 
-module;
-
-#include <cmath>
-#include <concepts>
-#include <cstdint>
-#include <limits>
-#include <string>
-
 export module nom.json_config:mapping;
+
+import std;
 
 import nom.config_types;
 
