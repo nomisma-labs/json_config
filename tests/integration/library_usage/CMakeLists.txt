@@ -25,10 +25,9 @@ endif()
 enable_testing()
 
 # The model compiles with common types alone; its JSON binding belongs to the consumer.
-nom_lib(config_model STATIC MODULES config_model.cppm
+nom_lib(config_model IMPORT_STD STATIC MODULES config_model.cppm
     BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}"
     PUBLIC_DEPS nom::config_types)
-nom_enable_std_modules(config_model)
 
 add_executable(use_library use_library_test.cxx)
 nom_enable_std_modules(use_library)
