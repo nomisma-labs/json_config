@@ -6,8 +6,13 @@ and versions follow [Semantic Versioning](https://semver.org); how to release:
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-06
+
 ### Added
 
+- Loadable Bash helpers `cfg_set`, `cfg_add`, `cfg_print`, and `cfg_clear` for
+  managing `NOM_CONFIG_DIR` in the current shell. Setting or adding a directory
+  prints the resulting search path.
 - Generated configuration help through `print_config_help()`, `--help`/`-h`, and
   short aliases `-c` for `--config` and `-k` for `--check-config`.
 - `full`, `view`, and `silent` check modes with `print_config_check()`. Full mode
@@ -16,6 +21,10 @@ and versions follow [Semantic Versioning](https://semver.org); how to release:
 
 ### Changed
 
+- Move repository-specific tools into `tools/json_config/` and update CMake,
+  tests, and documentation to use their new paths.
+- Rework the README for new users and add a dedicated introduction covering
+  application configuration, build collection, C++ mapping, and structured configs.
 - Bare `--check-config` now selects full output in the examples. The existing
   boolean check flag and loader API remain available; applications choose when
   to print help/check output and exit. The parser now exposes help through `.help`.
