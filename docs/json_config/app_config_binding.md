@@ -64,6 +64,55 @@ not defined). Pass it to `parse_config_arguments()` or set
 `config_options::config_key` directly. Explicit `--config` and `NOM_CONFIG`
 selections retain their precedence.
 
+### Selecting search directories in Bash
+
+Source [config_path.sh](../../tools/json_config/config_path.sh) from
+`~/.bash_aliases`, using the absolute path to your checkout:
+
+```bash
+source /path/to/json_config/tools/json_config/config_path.sh
+```
+
+If `~/.bashrc` already loads `~/.bash_aliases`, new Bash sessions will have the
+commands available. Run `source ~/.bash_aliases` to load them in an existing shell.
+Sourcing the script defines the commands without changing the current selection.
+
+| Command | Effect |
+|---|---|
+| `cfg_set` | Replace `NOM_CONFIG_DIR` with the current directory. |
+| `cfg_add` | Append the current directory unless it is already listed; start a new list if unset or empty. |
+| `cfg_clear` | Unset `NOM_CONFIG_DIR` and print the cleared state. |
+| `cfg_print` | Print one search directory per line, in order; report if unset or empty. |
+
+Both `cfg_set` and `cfg_add` print the resulting search path after a successful
+call, using the same format as `cfg_print`, including when a directory is already listed.
+
+```bash
+cd /srv/config/prod
+cfg_set
+# /srv/config/prod
+cd /srv/config/shared
+cfg_add
+# /srv/config/prod
+# /srv/config/shared
+cfg_print
+# /srv/config/prod
+# /srv/config/shared
+cfg_clear
+# NOM_CONFIG_DIR is not set
+```
+
+All commands take no arguments. The setters export absolute physical paths
+(resolving directory symlinks), so later `cd` commands do not change the selection.
+Repeated additions preserve the existing order. Spaces in paths are supported;
+colons are rejected because they separate entries. `cfg_add` rejects an existing
+list with empty entries; `cfg_set` can replace it.
+`cfg_clear` unsets the variable because an empty directory list is invalid for the locator.
+
+The selection applies to this shell and programs subsequently launched from it.
+Other existing terminals are unaffected. Explicit `--config`, `NOM_CONFIG`, and
+config files beside the executable still take precedence over this directory list.
+
 ## Loading and overrides
 
 After config resolution, the loader:
