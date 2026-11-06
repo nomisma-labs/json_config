@@ -7,14 +7,17 @@
 
 import std;
 
+import nom.json_config;
+
 namespace example
 {
-    app_arguments parse_app_arguments(const std::vector<std::string>& arguments)
+    app_arguments parse_app_arguments(const std::vector<std::string>& arguments, bool show_help)
     {
         namespace po = boost::program_options;
         app_arguments result;
+        result.help = show_help;
         po::options_description description("Application options");
-        description.add_options()("help,h", po::bool_switch(&result.help), "Print help")(
+        description.add_options()(
             "name", po::value(&result.name)->default_value("world"), "Greeting recipient; also accepted positionally")(
             "count", po::value(&result.count)->default_value(1), "Number of greetings")(
             "verbose,v", po::bool_switch(&result.verbose), "Print application progress");
@@ -27,12 +30,8 @@ namespace example
 
         if (result.help)
         {
-            std::cout << "Usage: config_args_example [options] [name]\n"
-                      << description
-                      << "\nConfig options:\n"
-                         "  --config FILE       Select a JSON config\n"
-                         "  --set POINTER=value Override a config value; repeatable\n"
-                         "  --check-config      Validate config and exit before running\n";
+            std::cout << "Usage: config_args_example [options] [name]\n" << description << '\n';
+            nom::jcfg::print_config_help(std::cout);
             return result;
         }
         if (result.count <= 0)

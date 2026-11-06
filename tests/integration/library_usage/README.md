@@ -22,7 +22,9 @@ hard-wired loading, and command-line parsing. Separate compile-failure tests rej
 unsupported config member types.
 
 A CTest fixture runs `jcfggen.py` on [consumer_jcfg.json](consumer_jcfg.json).
-The consumer loads the generated files through `parse_config_arguments()` and
+The consumer also checks generated help and normalized check output through
+`print_config_help()` and `print_config_check()`.
+It loads the generated files through `parse_config_arguments()` and
 `load_config()`: the valid section checks inheritance, child overrides, and C++
 defaults; the invalid section must report the expected validation stage, file, and
 message. Selecting either loading test also runs its generation fixture.

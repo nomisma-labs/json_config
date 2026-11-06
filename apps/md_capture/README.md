@@ -59,7 +59,11 @@ nested structures to them. It returns `std::expected<void, std::string>`; parent
 add the child's JSON path to errors so failures identify the full config location.
 
 `main()` parses config arguments, loads/maps/validates the configuration, and
-reports its source. `--check-config` exits at that point. Normal execution prints
+reports its source. `--check-config` (or `-k`) prints lookup details and final JSON,
+then exits before initialization. `--check-config=view` prints JSON only, while
+`-k silent` prints only `OK`. The JSON includes defaults and represents an absent
+`log.file` as `null`. `--help` (`-h`) prints generated option help before loading;
+`-c FILE` is the short form of `--config FILE`. Normal execution prints
 the settings that would initialize capture, including symbols, channels, and paths.
 
 Runtime overrides use the same JSON paths as the guide:
@@ -87,6 +91,6 @@ ctest --preset complete -R '^json_config_md_capture_'
 Four tests run `--check-config` on the generated sections. A CLI suite compares
 generated JSON with the documented outputs and checks the C++ values used by the
 application, including deletion and replacement in `prod-liquidation`. It also
-checks direct loading, nested overrides, startup suppression, and mapping and
+checks direct loading, nested overrides, all three check modes, startup suppression, and mapping and
 validation failures. The generator engine and CLI tests independently verify the
 same source inputs against the documented outputs.

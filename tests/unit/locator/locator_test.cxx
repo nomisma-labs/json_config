@@ -322,3 +322,61 @@ TEST_CASE("The local OS utility discovers the executable without argv zero", "[l
     CHECK(fs::is_regular_file(executable));
     CHECK_FALSE(executable.filename().empty());
 }
+
+TEST_CASE("Full checks report actual lookup order and stop at the selected file", "[locator]")
+{
+    temporary_directory temporary;
+    auto options = temporary.options();
+    options.check_config = true;
+    const auto selected = temporary.file("first/example/example.json");
+    const auto later = temporary.file("later/example.json");
+    const auto first_directory = (temporary.path / "first").string();
+    const auto later_directory = later.parent_path().string();
+    const auto result =
+        locate_config(options, environment({{"NOM_CONFIG_DIR", first_directory + ':' + later_directory}}));
+    CHECK(result.path == selected);
+    const auto& details = result.search_details;
+    const auto bundled = details.find("Missing candidate: " + (temporary.path / "bin/example.json").string());
+    const auto flat = details.find("Missing candidate: " + (temporary.path / "first/example.json").string());
+    const auto nested = details.find("Selected candidate: " + selected.string());
+    REQUIRE(bundled != std::string::npos);
+    REQUIRE(flat != std::string::npos);
+    REQUIRE(nested != std::string::npos);
+    CHECK(bundled < flat);
+    CHECK(flat < nested);
+    CHECK(details.contains("Executable: " + options.executable_path.string()));
+    CHECK(details.contains("Config key: example\n"));
+    CHECK_FALSE(details.contains("Search directory: " + later_directory));
+}
+
+TEST_CASE("Check diagnostics retain explicit-selection precedence", "[locator]")
+{
+    temporary_directory temporary;
+    auto options = temporary.options();
+    options.config_file = temporary.file("selected.json");
+    options.config_key = "invalid/key";
+    options.check_config = true;
+    const auto result =
+        locate_config(options,
+                      [](std::string_view) -> std::optional<std::string>
+                      {
+                          FAIL("full output must not consult environment sources overridden by --config");
+                          return std::nullopt;
+                      });
+    CHECK(result.search_details.contains("--config: " + options.config_file->string()));
+    CHECK(result.search_details.contains("Remaining locations: not searched after selection"));
+}
+
+TEST_CASE("Lookup detail collection is limited to full checks", "[locator]")
+{
+    temporary_directory temporary;
+    auto options = temporary.options();
+    temporary.file("bin/example.json");
+    CHECK(locate_config(options, environment()).search_details.empty());
+    options.check_config = true;
+    for (const auto mode : {config_check_mode::view, config_check_mode::silent})
+    {
+        options.check_mode = mode;
+        CHECK(locate_config(options, environment()).search_details.empty());
+    }
+}

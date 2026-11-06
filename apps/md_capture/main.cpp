@@ -171,23 +171,30 @@ int main(int argc, char** argv)
     try
     {
         const auto arguments = nom::jcfg::parse_config_arguments(argc, argv, NOM_CONFIG_KEY_VALUE);
+        if (arguments.help)
+        {
+            std::cout << "Usage: md_capture [options]\n";
+            nom::jcfg::print_config_help(std::cout);
+            return 0;
+        }
         if (!arguments.remaining_arguments.empty())
         {
-            std::cerr << "Usage: md_capture [--config FILE] [--set POINTER=value] [--check-config]\n";
+            std::cerr << "Usage: md_capture [options]\n";
+            nom::jcfg::print_config_help(std::cerr);
             return 1;
         }
         const auto loaded = nom::jcfg::load_config<md_capture::app_config>(arguments.options);
+        if (arguments.options.check_config)
+        {
+            nom::jcfg::print_config_check(std::cout, loaded, arguments.options.check_mode);
+            return 0;
+        }
         std::cout << "Config OK (" << nom::jcfg::config_source_name(loaded.location.source) << ')';
         if (loaded.location.path)
         {
             std::cout << ": " << loaded.location.path->string();
         }
         std::cout << '\n';
-        if (arguments.options.check_config)
-        {
-            return 0;
-        }
-
         // Show the settings that capture services would receive during initialization.
         std::cout << "Capture initialized\n";
         md_capture::print_capture_settings(loaded.value);

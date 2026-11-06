@@ -71,7 +71,8 @@ class config_args_example_tests(unittest.TestCase):
             for help_option in ("--help", "-h"):
                 with self.subTest(config=config, help_option=help_option):
                     result = self.run_app("--config", config, help_option)
-                    for option in ("--config", "--set", "--check-config", "--name", "--count", "--verbose"):
+                    for option in ("--config", "--set", "--check-config", "--name", "--count", "--verbose",
+                                   "-c", "-k", "-h", "full", "view", "silent"):
                         self.assertIn(option, result.stdout)
                     self.assertNotIn("Hello,", result.stdout)
                     self.assertEqual(result.stderr, "")
@@ -98,7 +99,33 @@ class config_args_example_tests(unittest.TestCase):
             "--config", self.config, "--name", "Alex", "--verbose",
             "--set", "/greeting=Hi", "--check-config",
         )
-        self.assertEqual(result.stdout, "Config OK\n")
+        self.assertIn(f"Config OK (command line): {self.config}\n", result.stdout)
+        self.assertEqual(json.loads(result.stdout.split("Configuration:\n", 1)[1]), {"greeting": "Hi"})
+        self.assertNotIn("Greeting count:", result.stdout)
+        self.assertNotIn("Hi, Alex!", result.stdout)
+
+    def test_check_modes_with_short_options_and_application_arguments(self):
+        for arguments, expected in (
+                (("-k", "view", "-v", "Alex"), '{"greeting": "Hello"}'),
+                (("-ksilent", "Alex"), "OK\n"),
+                (("--check-config=silent", "--", "view"), "OK\n")):
+            with self.subTest(arguments=arguments):
+                result = self.run_app("-c", self.config, *arguments)
+                if expected == "OK\n":
+                    self.assertEqual(result.stdout, expected)
+                else:
+                    self.assertEqual(json.loads(result.stdout), json.loads(expected))
+                self.assertEqual(result.stderr, "")
+
+        result = self.run_app(f"-c{self.config}", "-k", "Alex", "-v")
+        self.assertIn("Config lookup:\n", result.stdout)
+        self.assertNotIn("Hello, Alex!", result.stdout)
+
+    def test_unknown_check_mode_precedes_config_loading(self):
+        result = self.run_app("-c", self.directory / "missing.json", "--check-config=brief", success=False)
+        self.assertIn("Config arguments", result.stderr)
+        self.assertIn("full, view, or silent", result.stderr)
+        self.assertEqual(result.stdout, "")
 
     def test_config_failures_still_reach_framework_diagnostics(self):
         malformed = self.directory / "malformed.json"

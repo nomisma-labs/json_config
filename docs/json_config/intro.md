@@ -197,7 +197,9 @@ build/dev/bin/config_workflow_example \
     --set /timeout_s=20 --check-config
 ```
 
-This reports `Config OK` without starting the application. A timeout of `0` fails
+This reports the config lookup and final JSON without starting the application.
+Use `--check-config=view` for JSON only, or `--check-config=silent` for just `OK`.
+A timeout of `0` fails
 validation. Overrides apply to this invocation and do not change the JSON file.
 See [JSON/C++ mapping](json_cpp_mapping.md) for required fields,
 nested structures, and supported types, and

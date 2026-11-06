@@ -43,6 +43,14 @@ namespace consumer
                 std::cerr << "Generated config lost inherited values, child overrides or C++ defaults\n";
                 return 1;
             }
+            std::ostringstream view;
+            nom::jcfg::print_config_check(view, loaded, nom::jcfg::config_check_mode::view);
+            if (nlohmann::json::parse(view.str()) != nlohmann::json(loaded.value) ||
+                !loaded.location.search_details.contains("Selected candidate:"))
+            {
+                std::cerr << "Config check did not report the loaded configuration\n";
+                return 1;
+            }
         }
         catch (const nom::jcfg::config_error& error)
         {
@@ -128,6 +136,12 @@ int main(int argc, char** argv)
         parsed.remaining_arguments != std::vector<std::string>{"--verbose"})
     {
         return 8;
+    }
+    std::ostringstream help;
+    nom::jcfg::print_config_help(help);
+    if (!help.str().contains("--check-config") || !help.str().contains("silent"))
+    {
+        return 9;
     }
     return 0;
 }

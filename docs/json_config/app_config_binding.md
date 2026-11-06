@@ -157,8 +157,8 @@ build/dev/bin/md_capture --config build/dev/genconfig/prod/md_capture.json \
 
 Keep location, JSON loading, and [typed mapping](json_cpp_mapping.md) available
 separately. The core API accepts parsed options; an optional command-line adapter
-handles `--config`, repeated `--set`, and `--check-config` alongside app-owned options.
-It must not consume unrelated application arguments.
+handles `--config` (`-c`), repeated `--set`, `--check-config` (`-k`), and `--help`
+(`-h`) alongside app-owned options. Other arguments remain available to the app.
 
 Return the selected path and selection source with the load result, so the app can
 report which config it used. For hard-wired config, report that source without a
@@ -167,31 +167,44 @@ file or JSON Pointer. The library reports errors to its caller; the application'
 entry point chooses logging and exit behavior. No logger or assembly dependency is
 required to load config.
 
-`--check-config` runs the same loading and validation steps, reports success
-or failure, and exits before starting application services. Successful output can
-identify the selected file without dumping config values. Detailed printing and
-its treatment of sensitive fields remain a separate interface decision.
+`--check-config` runs the same loading and validation steps, then exits before
+starting application services. The application uses `print_config_check()` for
+successful output and handles loading errors through its usual error path.
 
 Import `nom.json_config` and link `nom::json_config`. The main entry point is
 `load_config<Config>(options)`, returning `loaded_config<Config>` with `.value`
-and `.location` (`.path` and `.source`). The root type must provide
+and `.location` (`.path`, `.source`, and `.search_details`). The root type must provide
 `validate() const` returning `std::expected<void, std::string>`.
 
 ```cpp
 const auto arguments = nom::jcfg::parse_config_arguments(argc, argv, NOM_CONFIG_KEY_VALUE);
+if (arguments.help)
+{
+    nom::jcfg::print_config_help(std::cout);
+    return 0;
+}
+// Parse or reject remaining application arguments before config I/O.
 const auto loaded = nom::jcfg::load_config<app_config>(arguments.options);
+if (arguments.options.check_config)
+{
+    nom::jcfg::print_config_check(std::cout, loaded, arguments.options.check_mode);
+    return 0;
+}
+// Initialize application services with loaded.value.
 ```
 
 The adapter returns app-owned arguments in `.remaining_arguments`, preserves `--`
 and everything following it, and accepts `--config` once. It uses
-Boost.Program_options with exact long option names; `--config=FILE` and
-`--set=POINTER=value` are also accepted. The application checks
-`.options.check_config` to exit after successful loading, before starting services.
+Boost.Program_options with exact long option names; `--config=FILE`, `-cFILE`, and
+`--set=POINTER=value` are also accepted. `--help` and `-h` set `.help` rather than
+remaining in the application arguments. `print_config_help()` uses the same
+Boost option descriptions as the parser, so names, aliases, and usage stay together.
 See the [complete application example](../../apps/config_workflow_example/README.md).
 
 The [application-argument example](../../apps/config_args_example/README.md) passes
-`.remaining_arguments` to its own Boost.Program_options parser before calling
-`load_config()`. Handle application help and argument validation at this point,
+`.remaining_arguments` and `.help` to its own Boost.Program_options parser before
+calling `load_config()`. It prints application help alongside `print_config_help()`.
+Handle application help and argument validation at this point,
 so help does not require a readable config and invalid app arguments fail before
 config loading. Both parsers and the application startup remain controlled by
 `main()`.
@@ -203,12 +216,49 @@ config loading. Both parsers and the application startup remain controlled by
 | `substitute_runtime_variables(document)` | Expand runtime placeholders in JSON values. |
 | `apply_config_overrides(document, overrides, probe)` | Apply ordered overrides using a caller-supplied mapping check. |
 | `load_config<Config>(options)` | Run the full sequence, native nlohmann mapping, and root validation. |
+| `print_config_help(output)` | Print the framework's option descriptions, aliases, and usage. |
+| `print_config_check(output, loaded, mode)` | Print a successful check in `full`, `view`, or `silent` mode. |
 
 Location, substitution, and typed loading accept an optional `environment_lookup`
 callback; by default they read the process environment. Mapping checks use native
 nlohmann conversion, for example `document.get<Config>()`, independently of the
 locator. `config_error` reports `.stage`, `.file`, `.pointer`, and an explanatory
 `what()` message. Nlohmann mapping errors retain their diagnostic JSON paths.
+
+### Check output
+
+Choose a mode with `--check-config=MODE`, `--check-config MODE`, `-k MODE`, or
+`-kMODE`. A bare `--check-config` or `-k` selects `full`. Repeated check options
+use the last mode.
+
+| Mode | Successful standard output |
+|---|---|
+| `full` | Lookup details, selected source/path (or hard-wired defaults), then the final JSON. |
+| `view` | Only the final JSON, suitable for redirecting to a file. |
+| `silent` | Only `OK`. |
+
+In `full` mode, the locator records its actual lookup in `.location.search_details`:
+selection inputs, executable and config key when used, missing candidates, and the
+selected file or fallback. Lookup stops at the first selected file; lower-priority
+locations are reported as not searched. No second lookup is performed for reporting.
+Normal loading and the other check modes leave this string empty.
+
+The final JSON is serialized from the validated C++ config, after runtime variable
+substitution and ordered command-line overrides. It includes C++ defaults and
+represents absent optional members as `null`; input fields outside the C++ mapping
+are omitted. Checking does not modify the source file. Failures produce no success
+report; the examples print diagnostics to standard error and return status 1.
+
+```bash
+build/dev/bin/config_workflow_example -c config.json -k
+build/dev/bin/config_workflow_example -c config.json --check-config=view
+build/dev/bin/config_workflow_example -c config.json -k silent
+```
+
+A separate word is consumed as the mode only when it is `full`, `view`, or `silent`;
+other words remain application arguments. Use `--` before an application positional
+argument with one of those names, such as `-k -- view`. An unknown attached mode,
+such as `--check-config=brief`, is an argument error.
 
 ## Hard-wired config
 

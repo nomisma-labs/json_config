@@ -54,6 +54,13 @@ export namespace nom::jcfg
         std::string value;
     };
 
+    enum class config_check_mode
+    {
+        full,
+        view,
+        silent
+    };
+
     struct config_options
     {
         std::filesystem::path executable_path;
@@ -61,18 +68,21 @@ export namespace nom::jcfg
         std::optional<std::filesystem::path> config_file;
         std::vector<config_override> overrides;
         bool check_config{};
+        config_check_mode check_mode{config_check_mode::full};
     };
 
     struct config_location
     {
         std::optional<std::filesystem::path> path;
         config_source source{config_source::hard_wired};
+        std::string search_details{};
     };
 
     struct parsed_config_arguments
     {
         config_options options;
         std::vector<std::string> remaining_arguments;
+        bool help{};
     };
 
     using environment_lookup = std::function<std::optional<std::string>(std::string_view)>;
@@ -84,6 +94,7 @@ export namespace nom::jcfg
     parsed_config_arguments parse_config_arguments(std::span<const std::string_view> arguments,
                                                    std::string config_key = {});
     parsed_config_arguments parse_config_arguments(int argc, const char* const* argv, std::string config_key = {});
+    void print_config_help(std::ostream& output);
 
     std::filesystem::path current_executable_path();
     config_location locate_config(const config_options& options,

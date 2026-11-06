@@ -66,20 +66,25 @@ build/dev/bin/config_workflow_example \
     --set /timeout_s=20 --check-config
 ```
 
-This reports `Config OK` with the selected source/path and exits successfully
-before application initialization. Without `--check-config`, it also prints the
+This reports the lookup, selected source/path, and final JSON, then exits successfully
+before application initialization. Without `--check-config`, it prints the source and
 initialization message with a timeout of 20 seconds.
 
 | Argument | Meaning |
 |---|---|
-| `--config FILE` | Select one JSON file; relative paths use the working directory |
+| `--help`, `-h` | Print generated option help before config loading |
+| `--config FILE`, `-c FILE` | Select one JSON file; relative paths use the working directory |
 | `--set POINTER=value` | Override an existing config value; repeatable, applied in order |
-| `--check-config` | Load, map, validate, and exit before initialization |
+| `--check-config[=MODE]`, `-k [MODE]` | Load, map, validate, report, and exit before initialization |
+
+The check modes are `full` (the default: lookup details and final JSON), `view`
+(JSON only), and `silent` (`OK` only). JSON reflects runtime substitutions, CLI
+overrides, and C++ defaults; absent optional members appear as `null`.
 
 Adjacent forms such as `--config=FILE` and `--set=/timeout_s=20` are also accepted.
 Unrecognized arguments print usage and exit with status 1. Config errors print
 their loading stage and exit with status 1; for example, setting `/timeout_s=0`
-fails root validation. The app has no application-specific options or help flag.
+fails root validation. The app has no application-specific options.
 See [app/config binding](../../docs/json_config/app_config_binding.md) for lookup
 precedence, environment selection, runtime variables, and override rules.
 
@@ -129,8 +134,9 @@ and executable to have been built first.
 
 The CLI suite generates this example's sections in a temporary directory and runs
 the real executable. It checks each section's timeout, config-key lookup through
-`NOM_CONFIG_DIR`, runtime overrides, and that `--check-config` exits before
-initialization. Mapping and validation errors must report their context and prevent
+`NOM_CONFIG_DIR`, runtime substitutions and overrides, C++ defaults, generated help,
+short aliases, and all three check modes before initialization.
+Mapping and validation errors must report their context and prevent
 startup. The [consumer tests](../../tests/integration/library_usage/README.md)
 also exercise generated configs through source and installed-package usage.
 

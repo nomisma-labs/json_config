@@ -66,12 +66,46 @@ class config_workflow_example_tests(unittest.TestCase):
             with self.subTest(section=section):
                 config = self.config_path(section)
                 result = self.run_app("--config", config, "--check-config")
-                self.assertEqual(result.stdout, f"Config OK (command line): {config}\n")
+                self.assertIn(f"Config OK (command line): {config}\n", result.stdout)
+                self.assertIn(f"Selected candidate: {config}\n", result.stdout)
+                expected = json.loads(config.read_text(encoding="utf-8"))
+                expected["interface_name"] = None
+                self.assertEqual(json.loads(result.stdout.split("Configuration:\n", 1)[1]), expected)
+                self.assertNotIn("Application initialized", result.stdout)
 
     def test_generated_section_is_found_through_the_config_key(self):
         self.environment["NOM_CONFIG_DIR"] = str(self.generated / "prod")
         result = self.run_app("--check-config")
-        self.assertEqual(result.stdout, f"Config OK (NOM_CONFIG_DIR): {self.config_path('prod')}\n")
+        self.assertIn(f"Config OK (NOM_CONFIG_DIR): {self.config_path('prod')}\n", result.stdout)
+        self.assertIn(f"Search directory: {self.generated / 'prod'}\n", result.stdout)
+        self.assertIn("Config key: config_workflow_example\n", result.stdout)
+        self.assertEqual(json.loads(result.stdout.split("Configuration:\n", 1)[1])["timeout_s"], 30)
+
+    def test_view_normalizes_runtime_values_overrides_and_cpp_defaults(self):
+        config = self.directory / "runtime.json"
+        document = {"endpoint": "{jcfg:run-var TEST_ENDPOINT}", "timeout_s": 1, "unused": "ignored"}
+        original = json.dumps(document)
+        config.write_text(original, encoding="utf-8")
+        self.environment["TEST_ENDPOINT"] = "https://runtime.example/feed"
+        result = self.run_app("-c", config, "--set", "/timeout_s=12", "--set", "/timeout_s=20", "-k", "view")
+        self.assertEqual(json.loads(result.stdout), {
+            "endpoint": "https://runtime.example/feed", "timeout_s": 20,
+            "enabled": True, "interface_name": None,
+        })
+        self.assertEqual(config.read_text(encoding="utf-8"), original)
+
+    def test_silent_check_prints_only_ok(self):
+        for option in ("--check-config=silent", "-ksilent"):
+            with self.subTest(option=option):
+                result = self.run_app("-c", self.config_path("dev"), option)
+                self.assertEqual(result.stdout, "OK\n")
+
+    def test_help_precedes_config_loading(self):
+        for option in ("--help", "-h"):
+            with self.subTest(option=option):
+                result = self.run_app("-c", self.directory / "missing.json", option)
+                for detail in ("--config", "--set", "--check-config", "-c", "-k", "full", "view", "silent"):
+                    self.assertIn(detail, result.stdout)
 
     def test_command_line_override_reaches_application_initialization(self):
         result = self.run_app("--config", self.config_path("prod"), "--set", "/timeout_s=20")
@@ -88,7 +122,7 @@ class config_workflow_example_tests(unittest.TestCase):
 
     def test_validation_failure_prevents_both_check_and_normal_startup(self):
         config = self.config_path("prod")
-        for arguments in ((), ("--check-config",)):
+        for arguments in ((), ("--check-config",), ("--check-config=view",), ("--check-config=silent",)):
             with self.subTest(arguments=arguments):
                 result = self.run_app("--config", config, "--set", "/timeout_s=0",
                                       *arguments, success=False)

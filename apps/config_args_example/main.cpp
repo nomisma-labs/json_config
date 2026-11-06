@@ -33,7 +33,9 @@ int main(int argc, char** argv)
     try
     {
         const auto arguments = nom::jcfg::parse_config_arguments(argc, argv, NOM_CONFIG_KEY_VALUE);
-        const auto app = example::parse_app_arguments(arguments.remaining_arguments);
+        // TODO: think how to make this case simpler - there are too many questions to this workflow. I understand the
+        // complexity of parsing extra argument, but this still looks too messy (e.g. --help handling)
+        const auto app = example::parse_app_arguments(arguments.remaining_arguments, arguments.help);
         if (app.help)
         {
             return 0;
@@ -42,7 +44,7 @@ int main(int argc, char** argv)
         const auto config = nom::jcfg::load_config<example::app_config>(arguments.options);
         if (arguments.options.check_config)
         {
-            std::cout << "Config OK\n";
+            nom::jcfg::print_config_check(std::cout, config, arguments.options.check_mode);
             return 0;
         }
 

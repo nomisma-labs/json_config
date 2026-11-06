@@ -71,7 +71,46 @@ namespace nom::jcfg
             }
             return result + ": " + message;
         }
+
+        boost::program_options::options_description config_description()
+        {
+            namespace po = boost::program_options;
+            po::options_description description("Config options");
+            description.add_options()("help,h", "Show application and configuration help without loading a config")(
+                "config,c",
+                po::value<std::string>()->value_name("FILE"),
+                "Select a JSON file (relative to the working directory); overrides environment lookup")(
+                "set",
+                po::value<std::string>()->value_name("POINTER=value"),
+                "Override an existing JSON value after runtime substitution; repeatable, applied in order")(
+                "check-config,k",
+                po::value<std::string>()->implicit_value("full")->value_name("MODE"),
+                "Validate and exit: full = lookup details and final JSON (default), view = final JSON only, "
+                "silent = OK only. Use --check-config=MODE or -k MODE");
+            return description;
+        }
+
+        bool is_check_mode(std::string_view value)
+        {
+            return value == "full" || value == "view" || value == "silent";
+        }
+
+        bool is_config_option(std::string_view token, const boost::program_options::options_description& description)
+        {
+            if (token.starts_with("--"))
+            {
+                const auto name = token.substr(2);
+                const std::string key(name.substr(0, name.find('=')));
+                return !key.empty() && description.find_nothrow(key, false) != nullptr;
+            }
+            return token.size() >= 2 && token.front() == '-' && (token[1] == 'c' || token[1] == 'k' || token[1] == 'h');
+        }
     } // namespace
+
+    void print_config_help(std::ostream& output)
+    {
+        output << config_description();
+    }
 
     config_error::config_error(config_stage stage,
                                std::string message,
@@ -105,10 +144,7 @@ namespace nom::jcfg
         // Boost does not retain the terminator in parsed_options; preserve the app's tail ourselves.
         const auto boundary = std::find(arguments.begin(), arguments.end(), "--");
         const std::vector<std::string> tokens(arguments.begin(), boundary);
-        po::options_description description("Config options");
-        description.add_options()("config", po::value<std::string>(), "Config file")(
-            "set", po::value<std::string>(), "Override <JSON-pointer>=<value>")(
-            "check-config", "Validate configuration without starting the application");
+        const auto description = config_description();
 
         try
         {
@@ -116,46 +152,67 @@ namespace nom::jcfg
                 po::command_line_parser(tokens)
                     .options(description)
                     .style(po::command_line_style::allow_long | po::command_line_style::long_allow_adjacent |
-                           po::command_line_style::long_allow_next)
+                           po::command_line_style::long_allow_next | po::command_line_style::allow_short |
+                           po::command_line_style::allow_dash_for_short | po::command_line_style::short_allow_adjacent |
+                           po::command_line_style::short_allow_next)
                     .allow_unregistered()
                     .extra_style_parser(
                         [&description](std::vector<std::string>& remaining) -> std::vector<po::option>
                         {
-                            // Leave app-owned option syntax untouched, including empty values such as --label=.
                             const auto& token = remaining.front();
-                            if (token.starts_with("--"))
+                            // An optional mode must not consume an unrelated application positional argument.
+                            if ((token == "--check-config" || token == "-k") &&
+                                (remaining.size() == 1 || !is_check_mode(remaining[1])))
                             {
-                                const auto name = std::string_view(token).substr(2);
-                                const std::string key(name.substr(0, name.find('=')));
-                                if (key.empty() || description.find_nothrow(key, false) == nullptr)
-                                {
-                                    po::option option;
-                                    option.string_key = key;
-                                    option.unregistered = true;
-                                    option.original_tokens.push_back(token);
-                                    remaining.erase(remaining.begin());
-                                    return {std::move(option)};
-                                }
+                                po::option option;
+                                option.string_key = "check-config";
+                                option.value.push_back("full");
+                                option.original_tokens.push_back(token);
+                                remaining.erase(remaining.begin());
+                                return {std::move(option)};
+                            }
+                            // Preserve app-owned options verbatim, including short groups and --label=.
+                            if (token.starts_with('-') && !is_config_option(token, description))
+                            {
+                                po::option option;
+                                option.string_key = token;
+                                option.unregistered = true;
+                                option.original_tokens.push_back(token);
+                                remaining.erase(remaining.begin());
+                                return {std::move(option)};
                             }
                             return {};
                         })
                     .run();
 
-            // Read parsed occurrences directly so repeated overrides retain order and check flags remain idempotent.
+            // Read occurrences directly to preserve override order; the last check mode wins.
             for (const auto& option : parsed.options)
             {
                 if (option.unregistered || option.string_key.empty())
                 {
                     continue;
                 }
+                if (option.string_key == "help")
+                {
+                    result.help = true;
+                    continue;
+                }
                 if (option.string_key == "check-config")
                 {
+                    const auto& mode = option.value.front();
+                    if (!is_check_mode(mode))
+                    {
+                        throw config_error(config_stage::arguments,
+                                           "--check-config mode must be full, view, or silent");
+                    }
                     result.options.check_config = true;
+                    result.options.check_mode = mode == "view"     ? config_check_mode::view
+                                                : mode == "silent" ? config_check_mode::silent
+                                                                   : config_check_mode::full;
                     continue;
                 }
                 const auto& value = option.value.front();
-                if (option.original_tokens.size() > 1 &&
-                    (value == "--config" || value == "--set" || value == "--check-config"))
+                if (option.original_tokens.size() > 1 && is_config_option(value, description))
                 {
                     throw config_error(config_stage::arguments, "--" + option.string_key + " requires a value");
                 }

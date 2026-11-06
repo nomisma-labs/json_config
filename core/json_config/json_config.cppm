@@ -80,6 +80,46 @@ export namespace nom::jcfg
     };
 
     template <typename Config>
+    void print_config_check(std::ostream& output,
+                            const loaded_config<Config>& loaded,
+                            config_check_mode mode = config_check_mode::full)
+    {
+        if (mode == config_check_mode::silent)
+        {
+            output << "OK\n";
+            return;
+        }
+
+        std::string document;
+        try
+        {
+            document = nlohmann::json(loaded.value).dump(4);
+        }
+        catch (const std::bad_alloc&)
+        {
+            throw;
+        }
+        catch (const std::exception& error)
+        {
+            throw config_error(config_stage::mapping, error.what(), loaded.location.path);
+        }
+        if (mode == config_check_mode::full)
+        {
+            if (!loaded.location.search_details.empty())
+            {
+                output << "Config lookup:\n" << loaded.location.search_details;
+            }
+            output << "Config OK (" << config_source_name(loaded.location.source) << ')';
+            if (loaded.location.path)
+            {
+                output << ": " << loaded.location.path->string();
+            }
+            output << "\nConfiguration:\n";
+        }
+        output << document << '\n';
+    }
+
+    template <typename Config>
     loaded_config<Config> load_config(const config_options& options = {},
                                       const environment_lookup& environment = process_environment)
     {

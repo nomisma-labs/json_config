@@ -71,7 +71,20 @@ class md_capture_tests(unittest.TestCase):
             with self.subTest(section=snapshot.parent.name):
                 config = self.generated / snapshot.relative_to(expected_configs)
                 result = self.run_app(config, "--check-config")
-                self.assertEqual(result.stdout, f"Config OK (command line): {config}\n")
+                self.assertIn(f"Config OK (command line): {config}\n", result.stdout)
+                expected = json.loads(snapshot.read_text(encoding="utf-8"))
+                expected["log"].setdefault("file", None)
+                self.assertEqual(json.loads(result.stdout.split("Configuration:\n", 1)[1]), expected)
+                self.assertNotIn("Capture initialized", result.stdout)
+
+    def test_view_and_silent_modes(self):
+        config = self.generated / "prod/md_capture.json"
+        result = self.run_app(config, "-kview", "--set", "/connection/timeout_s=11")
+        expected = json.loads(config.read_text(encoding="utf-8"))
+        expected["connection"]["timeout_s"] = 11
+        expected["log"].setdefault("file", None)
+        self.assertEqual(json.loads(result.stdout), expected)
+        self.assertEqual(self.run_app(config, "-k", "silent").stdout, "OK\n")
 
     def test_ordinary_development_config_loads_directly(self):
         result = self.run_app(self.collected / "md_capture.json")

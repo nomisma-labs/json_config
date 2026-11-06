@@ -6,6 +6,20 @@ and versions follow [Semantic Versioning](https://semver.org); how to release:
 
 ## [Unreleased]
 
+### Added
+
+- Generated configuration help through `print_config_help()`, `--help`/`-h`, and
+  short aliases `-c` for `--config` and `-k` for `--check-config`.
+- `full`, `view`, and `silent` check modes with `print_config_check()`. Full mode
+  reports the actual config lookup and final normalized JSON; view prints only
+  JSON, and silent prints only `OK`. All example applications use these helpers.
+
+### Changed
+
+- Bare `--check-config` now selects full output in the examples. The existing
+  boolean check flag and loader API remain available; applications choose when
+  to print help/check output and exit. The parser now exposes help through `.help`.
+
 ## [0.3.0] - 2026-10-28
 
 ### Changed

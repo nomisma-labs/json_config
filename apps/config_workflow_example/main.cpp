@@ -36,23 +36,30 @@ int main(int argc, char** argv)
     try
     {
         const auto arguments = nom::jcfg::parse_config_arguments(argc, argv, NOM_CONFIG_KEY_VALUE);
+        if (arguments.help)
+        {
+            std::cout << "Usage: config_workflow_example [options]\n";
+            nom::jcfg::print_config_help(std::cout);
+            return 0;
+        }
         if (!arguments.remaining_arguments.empty())
         {
-            std::cerr << "Usage: config_workflow_example [--config FILE] [--set POINTER=value] [--check-config]\n";
+            std::cerr << "Usage: config_workflow_example [options]\n";
+            nom::jcfg::print_config_help(std::cerr);
             return 1;
         }
         const auto loaded = nom::jcfg::load_config<example::app_config>(arguments.options);
+        if (arguments.options.check_config)
+        {
+            nom::jcfg::print_config_check(std::cout, loaded, arguments.options.check_mode);
+            return 0;
+        }
         std::cout << "Config OK (" << nom::jcfg::config_source_name(loaded.location.source) << ')';
         if (loaded.location.path)
         {
             std::cout << ": " << loaded.location.path->string();
         }
         std::cout << '\n';
-        if (arguments.options.check_config)
-        {
-            return 0;
-        }
-
         // Real application services would be initialized here using loaded.value.
         std::cout << "Application initialized; timeout: " << *loaded.value.timeout_s << " seconds\n";
         return 0;

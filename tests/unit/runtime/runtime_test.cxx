@@ -468,9 +468,29 @@ TEST_CASE("malformed config command-line options fail during argument parsing", 
     {
         arguments = {"--set=/key"};
     }
-    SECTION("check flag does not accept an argument")
+    SECTION("unknown check mode")
     {
         arguments = {"--check-config=anything"};
+    }
+    SECTION("empty check mode")
+    {
+        arguments = {"--check-config="};
+    }
+    SECTION("unknown adjacent short check mode")
+    {
+        arguments = {"-kanything"};
+    }
+    SECTION("short check option is not a config filename")
+    {
+        arguments = {"-c", "-k"};
+    }
+    SECTION("help option is not a config filename")
+    {
+        arguments = {"--config", "--help"};
+    }
+    SECTION("duplicate short and long config selection")
+    {
+        arguments = {"-c", "one", "--config=two"};
     }
     const auto error = capture_error([&] { nom::jcfg::parse_config_arguments(arguments); });
     CHECK(error.stage == nom::jcfg::config_stage::arguments);
@@ -505,4 +525,114 @@ TEST_CASE("argc adapter rejects invalid arrays", "[runtime][arguments]")
     const char* arguments[] = {"app", nullptr};
     CHECK(capture_error([&] { nom::jcfg::parse_config_arguments(2, arguments); }).stage ==
           nom::jcfg::config_stage::arguments);
+}
+
+TEST_CASE("Config aliases and output modes are parsed without taking application arguments", "[runtime][arguments]")
+{
+    using nom::jcfg::config_check_mode;
+    for (const auto& arguments :
+         std::vector<std::vector<std::string_view>>{{"-c", "app.json", "-k", "view"},
+                                                    {"-capp.json", "-kview"},
+                                                    {"--config=app.json", "--check-config=view"},
+                                                    {"--config", "app.json", "--check-config", "view"}})
+    {
+        const auto parsed = nom::jcfg::parse_config_arguments(arguments);
+        CHECK(parsed.options.config_file == "app.json");
+        CHECK(parsed.options.check_config);
+        CHECK(parsed.options.check_mode == config_check_mode::view);
+        CHECK(parsed.remaining_arguments.empty());
+    }
+    const std::array<std::string_view, 3> positional{"-k", "Alex", "-v"};
+    const auto bare = nom::jcfg::parse_config_arguments(positional);
+    CHECK(bare.options.check_config);
+    CHECK(bare.options.check_mode == config_check_mode::full);
+    CHECK(bare.remaining_arguments == std::vector<std::string>{"Alex", "-v"});
+
+    const std::array<std::string_view, 5> repeated{"--check-config=view", "-k", "--check-config", "silent", "-h"};
+    const auto last = nom::jcfg::parse_config_arguments(repeated);
+    CHECK(last.options.check_mode == config_check_mode::silent);
+    CHECK(last.help);
+    CHECK(last.remaining_arguments.empty());
+
+    const std::array<std::string_view, 5> tail{"--", "-h", "-c", "-k", "view"};
+    const auto stopped = nom::jcfg::parse_config_arguments(tail);
+    CHECK_FALSE(stopped.help);
+    CHECK_FALSE(stopped.options.check_config);
+    CHECK_FALSE(stopped.options.config_file);
+    CHECK(stopped.remaining_arguments == std::vector<std::string>{"--", "-h", "-c", "-k", "view"});
+}
+
+TEST_CASE("Config help describes aliases and output modes", "[runtime][arguments]")
+{
+    for (const std::string_view option : {"--help", "-h"})
+    {
+        const std::array arguments{option};
+        const auto parsed = nom::jcfg::parse_config_arguments(arguments);
+        CHECK(parsed.help);
+        CHECK(parsed.remaining_arguments.empty());
+    }
+    std::ostringstream output;
+    nom::jcfg::print_config_help(output);
+    for (const std::string_view term : {"--help",
+                                        "--config",
+                                        "--set",
+                                        "--check-config",
+                                        "-c",
+                                        "-k",
+                                        "-h",
+                                        "full",
+                                        "view",
+                                        "silent",
+                                        "working directory",
+                                        "repeatable"})
+    {
+        CHECK(output.str().contains(term));
+    }
+}
+
+TEST_CASE("Check output uses the final typed config and does not reload or validate it again", "[runtime][reporting]")
+{
+    using namespace runtime_fixture;
+    fixture test;
+    test.write_config(R"({"label":"{jcfg:run-var LABEL}","lower":1,"upper":8,"unused":"ignored"})");
+    test.variables["LABEL"] = "runtime";
+    test.options.overrides = {{"/lower", "5"}};
+    test.options.check_config = true;
+    const auto loaded = nom::jcfg::load_config<app_config>(test.options, test.environment());
+    REQUIRE(app_config::validation_count == 1);
+
+    std::ostringstream view;
+    nom::jcfg::print_config_check(view, loaded, nom::jcfg::config_check_mode::view);
+    const auto normalized = nlohmann::json::parse(view.str());
+    CHECK(normalized ==
+          nlohmann::json({{"label", "runtime"}, {"lower", 5}, {"upper", 8}, {"retries", nullptr}, {"active", true}}));
+
+    std::ostringstream full;
+    nom::jcfg::print_config_check(full, loaded);
+    CHECK(full.str().contains("Config lookup:\n"));
+    CHECK(full.str().contains("Selected candidate: " + test.options.config_file->string()));
+    CHECK(full.str().contains("Config OK (command line): " + test.options.config_file->string()));
+    CHECK(full.str().ends_with("Configuration:\n" + view.str()));
+
+    std::ostringstream silent;
+    nom::jcfg::print_config_check(silent, loaded, nom::jcfg::config_check_mode::silent);
+    CHECK(silent.str() == "OK\n");
+    CHECK(app_config::validation_count == 1);
+}
+
+TEST_CASE("Check output includes hard-wired defaults and their overrides", "[runtime][reporting]")
+{
+    runtime_fixture::fixture test;
+    test.options.check_config = true;
+    test.options.overrides = {{"/count", "7"}};
+    const auto loaded = nom::jcfg::load_config<runtime_fixture::hard_wired_config>(test.options, test.environment());
+    std::ostringstream output;
+    nom::jcfg::print_config_check(output, loaded);
+    CHECK(output.str().contains("Fallback: no config file found; using C++ defaults"));
+    CHECK(output.str().contains("Config OK (hard-wired)\n"));
+    const auto start = output.str().find("Configuration:\n");
+    REQUIRE(start != std::string::npos);
+    const auto document =
+        nlohmann::json::parse(output.str().substr(start + std::string_view("Configuration:\n").size()));
+    CHECK(document == nlohmann::json({{"count", 7}, {"label", "built-in"}, {"spare", nullptr}}));
 }

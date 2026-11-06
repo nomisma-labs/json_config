@@ -16,5 +16,5 @@ namespace example
         bool help{};
     };
 
-    app_arguments parse_app_arguments(const std::vector<std::string>& arguments);
+    app_arguments parse_app_arguments(const std::vector<std::string>& arguments, bool show_help = false);
 } // namespace example
