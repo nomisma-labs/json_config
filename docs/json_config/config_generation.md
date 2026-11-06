@@ -124,3 +124,41 @@ values or environment placeholders. Without a section filter it reports all
 sections, including suppressed ones. It supports build planning and deployment
 selection; it is not application validation. The [C++ loader](app_config_binding.md)
 performs runtime substitution, overrides, mapping, and validation.
+
+## Python API
+
+The [Python engine](../../tools/json_config/jcfg.py) resolves configs in memory
+without writing output files. From the repository root, use it directly:
+
+```python
+from tools.json_config.jcfg import generate_configs
+
+configs = generate_configs(
+    "apps/md_capture/config/md_capture_jcfg.json",
+    sections=["prod"],
+)
+print(configs["prod"].gen_file)  # md_capture.json
+print(configs["prod"].config)    # resolved application JSON as a Python dict
+```
+
+`generate_configs()` returns a dictionary keyed by section name, preserving source
+order, and writes no files.
+Omit `sections` to resolve all sections with generation enabled. Generation
+variables use the process environment by default. An explicit `environment`
+mapping replaces it for that call. Invalid configuration raises `config_error`
+with source context.
+
+`generate_configs_with_inputs()` accepts the same arguments and returns
+`(configs, input_paths)`. The paths are a set of absolute `Path` objects with
+symbolic links resolved, covering the source and donor files read for selected
+sections and their ancestors. The CLI uses them to protect inputs from output writes.
+
+## Tests
+
+Run the engine and CLI tests directly from the repository root, or through the
+normal CTest workflow:
+
+```bash
+python3 -m unittest discover -s tests/unit/jcfg -p '*_test.py' -v
+python3 -m unittest discover -s tests/integration/jcfggen -p '*_test.py' -v
+```

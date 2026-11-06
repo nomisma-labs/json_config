@@ -1,8 +1,41 @@
-# Post-v0.1.0 release TODO
+# Implementation status and TODO
 
-Follow-up work for discussion and review. Review the implementation first, then
-revisit application initialization. The convenience API and user-local config
-layer below are proposals, with design decisions still open.
+Current capabilities and follow-up work for discussion and review. Review the
+implementation first, then revisit application initialization. The convenience
+API and user-local config layer below are proposals, with design decisions still open.
+
+## Implementation status
+
+The [configuration documentation](docs/json_config/README.md) defines the library's
+behavior. The [Python generator engine](tools/json_config/jcfg.py) resolves jcfg sections to
+application JSON in memory. The [jcfggen.py CLI](tools/json_config/jcfggen.py) lists metadata
+and writes generated configs, preserving unchanged output files. Both use Python
+3.10+ and the standard library; no package installation is needed.
+
+The [CMake helpers](docs/json_config/build_system_integration.md) register generation,
+config tests and installation, and provide `config` and `clean_config` targets.
+App builds collect configs; generation is requested with `config` for the whole
+build or `<project>_generate_jcfg_<app>` for one app, or opted into with
+`nom_jcfg_generate(... BUILD_WITH_APP)`. Omit `SECTIONS` to generate all sections with
+generation enabled. The helpers reuse the existing
+`cmake_template` config collector.
+
+The [JSON/C++ mapping library](docs/json_config/json_cpp_mapping.md) is available
+through `import nom.json_config;` and the CMake target `nom::json_config`.
+`NOM_JCONFIG` in `<json_config/config.h>` maps application structures with required,
+defaulted, and optional members using nlohmann/json. It enforces supported config
+types, including checked JSON conversions for `cfg_int`, `cfg_uint`, and `cfg_double`.
+The [common config types](https://github.com/nomisma-labs/base/blob/master/docs/base/config_types.md) belong to `nom`, with
+convenience aliases in `nom::cfg_types`. The `base` dependency owns the format-independent
+`nom.config_types` module, re-exported by `nom.json_config`; its `nom::config_types` target is a
+transitive dependency for both source and installed consumers. Data-only consumers can use
+`find_package(base)` and link `nom::config_types` without the JSON library.
+Mapping and application validation are separate. The
+[C++ locator and loader](docs/json_config/app_config_binding.md) resolve a config,
+read JSON, substitute runtime variables, apply command-line overrides, then map
+and validate the root C++ type. Hard-wired defaults are supported when lookup finds
+no file. `load_config<Config>()` returns the typed value and selected source/path.
+The command-line adapter uses Boost.Program_options through the shared build kit.
 
 ## 1. Review key source files and workflows
 

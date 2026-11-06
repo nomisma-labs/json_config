@@ -66,6 +66,8 @@ selections retain their precedence.
 
 ### Selecting search directories in Bash
 
+For convenience, the framework provides a set of bash functions that help to manage search config path.
+
 Source [config_path.sh](../../tools/json_config/config_path.sh) from
 `~/.bash_aliases`, using the absolute path to your checkout:
 

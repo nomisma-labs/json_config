@@ -1,5 +1,8 @@
 # JSON application config library
 
+Start with the [introduction](intro.md) for the basic config workflow, C++ application
+integration, and structured configs. The guides below cover each part in more detail.
+
 **jcfg** is JSON based app config language described in [jcfg.md](jcfg.md)
 
 JSON app config framework has 4 components supporting various config related workflows:
@@ -8,7 +11,8 @@ JSON app config framework has 4 components supporting various config related wor
 1. [C++ config loader and app config resolution](app_config_binding.md);
 1. [JSON/C++ mapping](json_cpp_mapping.md);
 
-Implementation availability is tracked in the [repository status](../../README.md#implementation-status).
+Implemented capabilities are described in [Implementation status](../../TODO.md#implementation-status),
+with planned work listed separately in the same file.
 
 ## Implementation notes
 

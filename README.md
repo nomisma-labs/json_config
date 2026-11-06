@@ -1,119 +1,71 @@
 # json_config
 
 <!-- repo-description:begin -->
-**json_config** is Nomisma's application configuration library based on JSON.
-It shares its design with [toml_config](https://github.com/nomisma-labs/toml_config),
-with similar capabilities planned for both format implementations.
+**json_config** is Nomisma's JSON configuration framework for C++ applications.
+It loads settings into typed C++ structures, validates them before application
+startup, and generates configuration variants from structured configs.
 <!-- repo-description:end -->
 
-C++ builds and consumers use CMake 4.4.x, Ninja, GCC 16 or Clang 22, and libstdc++ 16
-standard-library module sources. Enable std module detection before the consumer's first
-`project()` and call `nom_enable_std_modules(target)` on each compiled consumer target.
-See [standard-library module setup](docs/kit/build.md#modules), including package consumers
-without the kit. Macro headers remain textual includes before imports.
-
-The scope includes layered configuration generation with a Python tool
-(`jcfggen.py`), C++ config resolution, JSON/C++ mapping, and build-system
-integration for collecting and generating app configs.
-
-## Implementation status
-
-The [configuration documentation](docs/json_config/README.md) defines the library's
-behavior. The [Python generator engine](tools/json_config/jcfg.py) resolves jcfg sections to
-application JSON in memory. The [jcfggen.py CLI](tools/json_config/jcfggen.py) lists metadata
-and writes generated configs, preserving unchanged output files. Both use Python
-3.10+ and the standard library; no package installation is needed.
-
-The [CMake helpers](docs/json_config/build_system_integration.md) register generation,
-config tests and installation, and provide `config` and `clean_config` targets.
-App builds collect configs; generation is requested with `config` for the whole
-build or `<project>_generate_jcfg_<app>` for one app, or opted into with
-`nom_jcfg_generate(... BUILD_WITH_APP)`. Omit `SECTIONS` to generate all sections with
-generation enabled. The helpers reuse the existing
-`cmake_template` config collector.
-
-The [JSON/C++ mapping library](docs/json_config/json_cpp_mapping.md) is available
-through `import nom.json_config;` and the CMake target `nom::json_config`.
-`NOM_JCONFIG` in `<json_config/config.h>` maps application structures with required,
-defaulted, and optional members using nlohmann/json. It enforces supported config
-types, including checked JSON conversions for `cfg_int`, `cfg_uint`, and `cfg_double`.
-The [common config types](https://github.com/nomisma-labs/base/blob/master/docs/base/config_types.md) belong to `nom`, with
-convenience aliases in `nom::cfg_types`. The `base` dependency owns the format-independent
-`nom.config_types` module, re-exported by `nom.json_config`; its `nom::config_types` target is a
-transitive dependency for both source and installed consumers. Data-only consumers can use
-`find_package(base)` and link `nom::config_types` without the JSON library.
-Mapping and application validation are separate. The
-[C++ locator and loader](docs/json_config/app_config_binding.md) resolve a config,
-read JSON, substitute runtime variables, apply command-line overrides, then map
-and validate the root C++ type. Hard-wired defaults are supported when lookup finds
-no file. `load_config<Config>()` returns the typed value and selected source/path.
-The command-line adapter uses Boost.Program_options through the shared build kit.
-
-Example applications have their own build, usage, and test instructions:
-
-- [config_workflow_example](apps/config_workflow_example/README.md) — the full build, config, test, packaging, and installation workflow.
-- [md_capture](apps/md_capture/README.md) — the comprehensive configuration example from jcfg.md.
-- [config_args_example](apps/config_args_example/README.md) — application arguments alongside config arguments.
-
-The [consumer tests](tests/integration/library_usage/README.md) exercise generated
-configs through both source integration and the installed C++ package.
-
-Generate one config from the complete example:
-
-```bash
-python3 tools/json_config/jcfggen.py \
-    --source apps/md_capture/config/md_capture_jcfg.json \
-    --config prod --output-dir build/dev/genconfig
-```
-
-This writes `build/dev/genconfig/prod/md_capture.json`. Use `--list` instead of
-`--output-dir` to inspect section metadata without evaluating imports or variables.
-Use `--input-dir DIR` instead of `--source FILE` to discover `*_jcfg.json` files recursively.
-See [config generation](docs/json_config/config_generation.md) for the full CLI.
-
-From the repository root, the engine can be used independently:
-
-```python
-from tools.json_config.jcfg import generate_configs
-
-configs = generate_configs(
-    "apps/md_capture/config/md_capture_jcfg.json",
-    sections=["prod"],
-)
-print(configs["prod"].gen_file)  # md_capture.json
-print(configs["prod"].config)    # resolved application JSON as a Python dict
-```
-
-`generate_configs()` returns a dictionary keyed by section name, preserving source
-order, and writes no files.
-Omit `sections` to resolve all sections with generation enabled. Generation
-variables use the process environment unless an explicit `environment` mapping
-is supplied. Invalid configuration raises `config_error` with source context.
-
-`generate_configs_with_inputs()` accepts the same arguments and returns
-`(configs, input_paths)`. The paths are a set of absolute `Path` objects with
-symbolic links resolved, covering the source and donor files read for selected
-sections and their ancestors. The CLI uses them to protect inputs from output writes.
-
-Run the engine and CLI tests directly, or through the normal CTest workflow:
-
-```bash
-python3 -m unittest discover -s tests/unit/jcfg -p '*_test.py' -v
-python3 -m unittest discover -s tests/integration/jcfggen -p '*_test.py' -v
-```
+Start with the [introduction](docs/json_config/intro.md): create a config file,
+build and load it in your app, then explore structured configs and variants.
 
 ## Build
 
-Install the tools listed in [docs/kit/build.md](docs/kit/build.md#toolchain), then:
+The C++ library uses named modules and `import std`. The supported toolchain uses
+CMake 4.4.x, Ninja, GCC 16 or Clang 22, and libstdc++ 16 module sources. Follow the
+[toolchain setup](docs/kit/build.md#toolchain) for compiler and dependency installation.
+The `dev` preset uses GCC 16.
+
+Initialize dependencies, then build the library and examples and run the fast tests:
 
 ```bash
-./bootstrap.sh                   # fresh builds, tests and checks for every preset but release
-cmake --workflow --preset dev    # configure, build and test one preset
+git submodule update --init --recursive
+cmake --workflow --preset dev
 ```
 
-Everyday commands, the presets and what bootstrap checks: [docs/kit/build.md](docs/kit/build.md).
+Executables are written to `build/dev/bin/`. For a fresh build with all tests,
+including integration tests, run `./bootstrap.sh complete`; it recreates
+`build/complete/` and runs the repository checks. The
+[build guide](docs/kit/build.md) covers incremental builds, other presets,
+installation, and validation across toolchains. For using `json_config` from
+another project, the [consumer example](tests/integration/library_usage/README.md)
+covers source and installed-package integration, including module setup.
 
 ## Docs
 
-Agents start at [AGENTS.md](AGENTS.md), people at [docs/](docs/README.md). Adding a library, an
-app, tests or a dependency: [docs/kit/howto.md](docs/kit/howto.md). Releases: [CHANGELOG.md](CHANGELOG.md).
+The [framework documentation](docs/json_config/README.md) is the main reference.
+Choose a guide according to what you want to do:
+
+| Task | Guide |
+|---|---|
+| Select configs, use environment variables, or override values | [Loading and application integration](docs/json_config/app_config_binding.md) |
+| Define C++ config types, defaults, and validation | [JSON/C++ mapping](docs/json_config/json_cpp_mapping.md) |
+| Generate, test, and install configs through CMake | [Build integration](docs/json_config/build_system_integration.md) |
+| Compose structured configs and define variants | [jcfg language](docs/json_config/jcfg.md) |
+| Generate JSON files or inspect available sections | [Config generation](docs/json_config/config_generation.md) |
+
+Runnable examples include their own build, usage, and test instructions:
+
+- [config_workflow_example](apps/config_workflow_example/README.md): the full generation, loading, validation, and installation workflow.
+- [config_args_example](apps/config_args_example/README.md): ordinary JSON and application arguments alongside config options.
+- [md_capture](apps/md_capture/README.md): a larger configuration with shared fragments and several variants.
+
+See the [tools overview](tools/json_config/README.md) for the generator, reusable
+Python engine, build utility, and shell helpers. Release changes are recorded in
+[CHANGELOG.md](CHANGELOG.md); implementation status, planned work, and open decisions
+are in [TODO.md](TODO.md).
+
+## Platform context
+
+`json_config` uses Nomisma's shared build kit, maintained in `cmake_template`.
+The [platform documentation](docs/kit/README.md) describes the general build and
+repository rules. Contributors can use the [conventions](docs/kit/conventions.md)
+and [recipes for adding libraries, apps, tests, and dependencies](docs/kit/howto.md).
+
+The `base` library supplies the format-independent configuration types;
+nlohmann/json provides JSON mapping, and Boost.Program_options supports argument
+parsing. See the [mapping implementation notes](docs/json_config/nlohmann_implementation.md)
+for those boundaries. [toml_config](https://github.com/nomisma-labs/toml_config) is
+the related TOML configuration project.
+
+Instructions for automated contributors are in [AGENTS.md](AGENTS.md).
