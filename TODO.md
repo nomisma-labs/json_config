@@ -9,9 +9,9 @@ layer below are proposals, with design decisions still open.
 Review each significant script and C++ source, together with its tests and the
 workflows it supports:
 
-- [ ] [tools/jcfg.py](tools/jcfg.py)
-- [ ] [tools/jcfggen.py](tools/jcfggen.py)
-- [ ] [tools/jcfg_build.py](tools/jcfg_build.py)
+- [ ] [tools/json_config/jcfg.py](tools/json_config/jcfg.py)
+- [ ] [tools/json_config/jcfggen.py](tools/json_config/jcfggen.py)
+- [ ] [tools/json_config/jcfg_build.py](tools/json_config/jcfg_build.py)
 - [ ] [core/json_config/config_loader.cpp](core/json_config/config_loader.cpp)
 - [ ] [core/json_config/config_locator.cpp](core/json_config/config_locator.cpp)
 - [ ] [core/json_config/config_options.cpp](core/json_config/config_options.cpp) — revisit enum stringification.

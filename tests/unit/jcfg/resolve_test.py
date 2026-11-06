@@ -8,7 +8,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from tools.jcfg import config_error, generate_configs
+from tools.json_config.jcfg import config_error, generate_configs
 
 
 repository = Path(__file__).resolve().parents[3]

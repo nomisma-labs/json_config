@@ -26,7 +26,7 @@ class config_workflow_example_tests(unittest.TestCase):
         self.environment.pop("NOM_CONFIG_DIR", None)
 
         result = subprocess.run(
-            [sys.executable, str(repository / "tools/jcfggen.py"),
+            [sys.executable, str(repository / "tools/json_config/jcfggen.py"),
              "--source", str(repository / "apps/config_workflow_example/config/config_workflow_example_jcfg.json"),
              "--output-dir", str(self.generated)],
             cwd=self.directory, env=self.environment,

@@ -139,7 +139,7 @@ Remove renamed or deselected files owned by that registration without touching
 other apps' outputs. Valid runtime `{jcfg:run-var NAME}` placeholders are allowed in
 generated files; C++ type and application validation happen when the app loads them.
 
-The build utility [jcfg_build.py](../../tools/jcfg_build.py) keeps ownership and
+The build utility [jcfg_build.py](../../tools/json_config/jcfg_build.py) keeps ownership and
 success records under `CMakeFiles/json_config/records/`. Success is invalidated
 before collection, including an app-only collection or a failed collection. The
 configure-time output plan lives separately so cleaning does not require a CMake

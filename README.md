@@ -19,8 +19,8 @@ integration for collecting and generating app configs.
 ## Implementation status
 
 The [configuration documentation](docs/json_config/README.md) defines the library's
-behavior. The [Python generator engine](tools/jcfg.py) resolves jcfg sections to
-application JSON in memory. The [jcfggen.py CLI](tools/jcfggen.py) lists metadata
+behavior. The [Python generator engine](tools/json_config/jcfg.py) resolves jcfg sections to
+application JSON in memory. The [jcfggen.py CLI](tools/json_config/jcfggen.py) lists metadata
 and writes generated configs, preserving unchanged output files. Both use Python
 3.10+ and the standard library; no package installation is needed.
 
@@ -61,7 +61,7 @@ configs through both source integration and the installed C++ package.
 Generate one config from the complete example:
 
 ```bash
-python3 tools/jcfggen.py \
+python3 tools/json_config/jcfggen.py \
     --source apps/md_capture/config/md_capture_jcfg.json \
     --config prod --output-dir build/dev/genconfig
 ```
@@ -74,7 +74,7 @@ See [config generation](docs/json_config/config_generation.md) for the full CLI.
 From the repository root, the engine can be used independently:
 
 ```python
-from tools.jcfg import generate_configs
+from tools.json_config.jcfg import generate_configs
 
 configs = generate_configs(
     "apps/md_capture/config/md_capture_jcfg.json",

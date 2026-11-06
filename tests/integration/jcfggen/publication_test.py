@@ -11,7 +11,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from tools.jcfggen import main
+from tools.json_config.jcfggen import main
 
 
 class publication_tests(unittest.TestCase):
@@ -54,7 +54,7 @@ class publication_tests(unittest.TestCase):
                 raise OSError("simulated staging failure")
             return create_temporary(*args, **kwargs)
 
-        with patch("tools.jcfggen.tempfile.NamedTemporaryFile", side_effect=fail_second_temporary):
+        with patch("tools.json_config.jcfggen.tempfile.NamedTemporaryFile", side_effect=fail_second_temporary):
             self.assert_cli_failure("simulated staging failure")
         self.assertEqual(calls, 2)
         self.assertEqual(self.files(), self.previous)
@@ -70,7 +70,7 @@ class publication_tests(unittest.TestCase):
                 raise OSError("simulated replacement failure")
             return replace(*args, **kwargs)
 
-        with patch("tools.jcfggen.os.replace", side_effect=fail_second_replace):
+        with patch("tools.json_config.jcfggen.os.replace", side_effect=fail_second_replace):
             self.assert_cli_failure("simulated replacement failure")
         self.assertEqual(calls, 2)
         remaining = self.files()

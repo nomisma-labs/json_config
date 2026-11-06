@@ -11,7 +11,7 @@ set(NOM_GEN_CONFIG_DIR "${CMAKE_BINARY_DIR}/genconfig" CACHE INTERNAL "Generated
 set(NOM_CONFIG_BUILD_DIR "${CMAKE_BINARY_DIR}/CMakeFiles/json_config" CACHE INTERNAL "Config build metadata directory")
 
 find_package(Python 3.10 REQUIRED COMPONENTS Interpreter)
-get_filename_component(jcfg_tools "${CMAKE_CURRENT_LIST_DIR}/../../tools" ABSOLUTE)
+get_filename_component(jcfg_tools "${CMAKE_CURRENT_LIST_DIR}/../../tools/json_config" ABSOLUTE)
 set_property(GLOBAL PROPERTY JCFG_PYTHON "${Python_EXECUTABLE}")
 set_property(GLOBAL PROPERTY JCFG_TOOLS "${jcfg_tools}")
 set_property(GLOBAL PROPERTY JCFG_PLAN "${NOM_CONFIG_BUILD_DIR}/plan.json")

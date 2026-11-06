@@ -38,7 +38,7 @@ add_test(NAME use_library COMMAND use_library)
 find_package(Python 3.10 REQUIRED COMPONENTS Interpreter)
 set(generated_config_dir "${CMAKE_CURRENT_BINARY_DIR}/genconfig")
 add_test(NAME generate_consumer_config
-    COMMAND ${Python_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/../../../tools/jcfggen.py"
+    COMMAND ${Python_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/../../../tools/json_config/jcfggen.py"
         --source "${CMAKE_CURRENT_SOURCE_DIR}/consumer_jcfg.json"
         --output-dir "${generated_config_dir}")
 set_tests_properties(generate_consumer_config PROPERTIES FIXTURES_SETUP consumer_generated_config)

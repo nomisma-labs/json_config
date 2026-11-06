@@ -12,7 +12,7 @@ import unittest
 
 
 repository = Path(__file__).resolve().parents[3]
-generator = repository / "tools/jcfggen.py"
+generator = repository / "tools/json_config/jcfggen.py"
 examples = repository / "docs/json_config/examples"
 
 

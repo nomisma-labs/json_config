@@ -65,14 +65,14 @@ allowed. Verbose messages and errors go to stderr, keeping stdout usable as JSON
 For one application:
 
 ```bash
-python3 tools/jcfggen.py --input-dir build/dev/config --app md_capture \
+python3 tools/json_config/jcfggen.py --input-dir build/dev/config --app md_capture \
     --config prod --output-dir build/dev/genconfig
 ```
 
 To generate directly from the [complete example](../../apps/md_capture/config/md_capture_jcfg.json):
 
 ```bash
-python3 tools/jcfggen.py \
+python3 tools/json_config/jcfggen.py \
     --source apps/md_capture/config/md_capture_jcfg.json \
     --config prod --output-dir build/dev/genconfig
 ```
