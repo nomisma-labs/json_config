@@ -6,7 +6,7 @@ Its scope is Python configuration generation, C++ configuration discovery and
 JSON/C++ mapping, and build-system integration. The Python resolution engine,
 generator CLI, generation-specific CMake helpers, C++ mapping module, locator,
 runtime loader, and their tests are implemented.
-The public C++ API is `nom.json_config`, with `NOM_JCONFIG` in
+The public C++ API is `nom.json_config`, with `NOM_JCONFIG` and `NOM_JCONFIG_ENUM` in
 `<json_config/config.h>`. The `base` dependency owns the format-independent
 `nom::cfg_*` types in `nom.config_types`; this repo supplies their JSON mapping
 and numeric conversion checks, and re-exports the common module.

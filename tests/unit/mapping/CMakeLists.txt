@@ -1,4 +1,4 @@
 # SPDX-FileCopyrightText: 2026 Alexey Tkachenko
 # SPDX-License-Identifier: LicenseRef-Nomisma-Labs-Proprietary
 
-nom_c2test(mapping_tests IMPORT_STD SOURCES mapping_test.cxx DEPS nom::json_config)
+nom_c2test(mapping_tests IMPORT_STD SOURCES mapping_test.cxx enum_mapping_test.cxx DEPS nom::json_config)

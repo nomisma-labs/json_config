@@ -77,6 +77,7 @@ recursively to wrappers and container elements.
 | `nom::cfg_uint` | Nonnegative JSON integer in the `std::uint64_t` range |
 | `nom::cfg_double` | JSON number that converts to a finite `double` |
 | A structure declared with `NOM_JCONFIG` | JSON object; the macro enables the structure automatically |
+| An enum declared with `NOM_JCONFIG_ENUM` | Explicitly mapped JSON string; unmapped values fail conversion |
 | `nom::cfg_vector<T>` (`std::vector<T>`) | JSON array of enabled values |
 | `nom::cfg_map<T>` or `nom::cfg_unordered_map<T>` | JSON object with enabled mapped values |
 
@@ -116,6 +117,11 @@ void to_json(nlohmann::json& document, const domain_type& value);
 Use `NOM_JCONFIG` for ordinary structure mappings. For renamed keys or domain
 types represented by a scalar or collection, write a converter using `at()`,
 `get_to()`, assignment, and other nlohmann/json facilities directly.
+
+For enums represented by strings, use
+[`NOM_JCONFIG_ENUM`](json_cpp_mapping.md#enum-mapping). It supplies both converters
+and the config-type registration. It uses exact matching and rejects unmapped
+values in both directions, rather than falling back to another enumerator.
 
 To use a custom type as a config member, explicitly enable it before its first
 use in `NOM_JCONFIG`:

@@ -93,6 +93,55 @@ only some defaulted members; required members still need their JSON keys.
 The [nlohmann/json implementation notes](nlohmann_implementation.md) describe the default and
 optional wrappers, the treatment of `null`, and conversion details.
 
+## Enum mapping
+
+Use `NOM_JCONFIG_ENUM` to register an enum as a config type and define its JSON
+string representation. Include `<json_config/config.h>`, import `std` and
+`nom.json_config`, and declare the mapping in the enum's namespace, before using
+it in a structure mapping:
+
+```cpp
+namespace demo
+{
+    enum class log_level
+    {
+        debug,
+        info,
+        warn
+    };
+
+    NOM_JCONFIG_ENUM(log_level,
+                     {{log_level::debug, "debug"},
+                      {log_level::info, "info"},
+                      {log_level::warn, "warn"}})
+
+    struct log_config
+    {
+        nom::cfg_defaulted<log_level> level{log_level::info};
+    };
+
+    NOM_JCONFIG(log_config, level)
+}
+```
+
+Here, `{"level":"debug"}` selects `log_level::debug`; `{}` and `{"level":null}`
+preserve the initialized `info` value. Declaring a plain `log_level level` instead
+makes the field required, even if it has a C++ initializer. An optional enum uses
+the same absent/null rules as other optional members.
+
+The mapping is a nonempty list of `{enumerator, string}` pairs. Matching is exact
+and case-sensitive. Additional names for an enum value can be listed explicitly;
+the first matching entry is used, so the first name for a value is its canonical
+serialized form. For example, adding `{log_level::info, "INFO"}` after the `"info"`
+entry accepts both spellings and serializes either as `"info"`.
+
+Unknown strings and non-string JSON values throw `nlohmann::json::type_error`.
+Serialization also throws for any enum value without a mapping. There is no
+fallback to the first entry. Deserialization errors preserve the JSON path in
+nested objects and containers, and failed conversion leaves the destination enum
+unchanged. `cfg_defaulted` and optional wrappers handle `null` before invoking
+the enum converter; a required enum rejects it.
+
 ## Validation boundaries
 
 Mapping checks object structure and required keys, then uses each type's

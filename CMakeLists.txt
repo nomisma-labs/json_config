@@ -7,7 +7,7 @@ include(cmake/kit/std_modules.cmake)
 
 # The version lives only here; releases are tagged v<version> (docs/kit/build.md#versioning).
 project(json_config
-    VERSION 0.4.0
+    VERSION 0.5.0
     DESCRIPTION "JSON-based application configuration library for Nomisma"
     LANGUAGES CXX)
 

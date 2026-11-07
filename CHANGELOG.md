@@ -6,6 +6,14 @@ and versions follow [Semantic Versioning](https://semver.org); how to release:
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-07
+
+### Added
+
+- `NOM_JCONFIG_ENUM` registers config enum types and maps explicit string names,
+  rejecting unmapped JSON and enum values. It composes with required, defaulted,
+  optional and container config members.
+
 ## [0.4.0] - 2026-11-06
 
 ### Added
