@@ -6,6 +6,20 @@ and versions follow [Semantic Versioning](https://semver.org); how to release:
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-08
+
+### Changed
+
+- Move library sources from `core/` to `src/` and synchronize shared build tooling with
+  cmake_template v0.13.0. Module names, CMake targets, public includes and installed paths
+  remain unchanged.
+- Pin base v0.4.0 so the library and its source dependency use the same `src/` layout.
+
+### Upgrade
+
+- Source consumers must adopt cmake_template v0.13.0 and migrate their library sources to
+  `src/` together with their dependency pins. Recreate build trees and compilation databases.
+
 ## [0.5.0] - 2026-11-07
 
 ### Added

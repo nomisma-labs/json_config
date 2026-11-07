@@ -46,7 +46,7 @@ The locator does not automatically choose between `dev`, `ci`, and `prod` sectio
 The caller can supply the resolved executable path through
 `config_options::executable_path`. Otherwise, `current_executable_path()` obtains
 it through a library-local OS utility; `argv[0]` alone may be a bare command name.
-The private boundary is `core/json_config/util/os.h`, with its Linux implementation
+The private boundary is `src/json_config/util/os.h`, with its Linux implementation
 selected by CMake. When a common core OS library is available, move that operation
 there and keep the config locator calling the same boundary.
 

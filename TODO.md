@@ -47,10 +47,10 @@ workflows it supports:
 - [ ] [tools/json_config/jcfg.py](tools/json_config/jcfg.py)
 - [ ] [tools/json_config/jcfggen.py](tools/json_config/jcfggen.py)
 - [ ] [tools/json_config/jcfg_build.py](tools/json_config/jcfg_build.py)
-- [ ] [core/json_config/config_loader.cpp](core/json_config/config_loader.cpp)
-- [ ] [core/json_config/config_locator.cpp](core/json_config/config_locator.cpp)
-- [ ] [core/json_config/config_options.cpp](core/json_config/config_options.cpp) — revisit enum stringification.
-- [ ] [core/json_config/config_runtime.cppm](core/json_config/config_runtime.cppm) — review whether the name reflects its responsibilities.
+- [ ] [src/json_config/config_loader.cpp](src/json_config/config_loader.cpp)
+- [ ] [src/json_config/config_locator.cpp](src/json_config/config_locator.cpp)
+- [ ] [src/json_config/config_options.cpp](src/json_config/config_options.cpp) — revisit enum stringification.
+- [ ] [src/json_config/config_runtime.cppm](src/json_config/config_runtime.cppm) — review whether the name reflects its responsibilities.
 - [ ] Work through the build, usage, and test instructions in every example README:
   [config_workflow_example](apps/config_workflow_example/README.md),
   [config_args_example](apps/config_args_example/README.md), and
