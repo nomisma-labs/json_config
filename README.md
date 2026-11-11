@@ -69,3 +69,9 @@ for those boundaries. [toml_config](https://github.com/nomisma-labs/toml_config)
 the related TOML configuration project.
 
 Instructions for automated contributors are in [AGENTS.md](AGENTS.md).
+
+## License
+
+This project is licensed under [MIT](LICENSE). Copyright belongs to Alexey Tkachenko.
+The synchronized build kit retains its [MIT notice](cmake/kit/LICENSE); third-party
+dependencies retain their own licenses.
